@@ -5,7 +5,7 @@ from .views import home, restricted_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
-    path('accounts/', include('django.contrib.auth.urls')),  # URLs de autenticación
+    path('accounts/', include('django.contrib.auth.urls')),
     path('restricted/', restricted_view, name='restricted'),
+    path('', include('projects.urls')),
 ]
-

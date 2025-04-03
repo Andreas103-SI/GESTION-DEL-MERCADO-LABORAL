@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Lista de Proyectos</h2>
+    <ul>
+        {% for project in projects %}
+            <li>{{ project.name }} - {{ project.manager }}</li>
+        {% empty %}
+            <li>No hay proyectos.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'project_create' %}">Crear Proyecto</a>
+{% endblock %}
