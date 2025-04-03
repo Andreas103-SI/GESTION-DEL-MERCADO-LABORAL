@@ -131,7 +131,13 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Configuración del modelo de usuario personalizado
+AUTH_USER_MODEL = 'users.CustomUser'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_REDIRECT_URL = '/'  # Redirige a home tras login
+LOGOUT_REDIRECT_URL = '/'  # Redirige a home tras logout
