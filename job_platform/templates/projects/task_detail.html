@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>{{ task.title }}</h2>
+    <div class="task-details">
+        <p><strong>Descripción:</strong> {{ task.description }}</p>
+        <p><strong>Estado:</strong> {{ task.get_state_display }}</p>
+        <p><strong>Prioridad:</strong> {{ task.get_priority_display }}</p>
+        <p><strong>Fecha Límite:</strong> {{ task.deadline }}</p>
+        <p><strong>Colaboradores:</strong>
+            {% for collaborator in task.collaborators.all %}
+                {{ collaborator.get_full_name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                No hay colaboradores asignados
+            {% endfor %}
+        </p>
+        <p><strong>Habilidades requeridas:</strong>
+            {% for skill in task.skills.all %}
+                {{ skill.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+                No se requieren habilidades específicas
+            {% endfor %}
+        </p>
+    </div>
+    <div class="actions">
+        {% if request.user.role == 'manager' %}
+            <a href="{% url 'task_update' project.id task.id %}" class="button">Editar</a>
+            <a href="{% url 'task_delete' project.id task.id %}" class="button">Eliminar</a>
+        {% endif %}
+        <a href="{% url 'task_list' project.id %}" class="button">Volver a la lista de tareas</a>
+    </div>
+{% endblock %} 

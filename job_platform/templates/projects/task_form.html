@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Tarea</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar</button>
+        <a href="{% url 'project_detail' project.id %}" class="button">Cancelar</a>
+    </form>
+{% endblock %} 

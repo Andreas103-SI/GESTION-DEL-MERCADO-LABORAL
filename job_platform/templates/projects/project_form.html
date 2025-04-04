@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h2>Crear Proyecto</h2>
+    <h2>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Proyecto</h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Guardar</button>
+        <a href="{% if form.instance.pk %}{% url 'project_detail' form.instance.id %}{% else %}{% url 'project_list' %}{% endif %}" class="button">Cancelar</a>
     </form>
 {% endblock %}

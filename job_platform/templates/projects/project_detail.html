@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>{{ project.name }}</h2>
+    <div class="project-details">
+        <p><strong>Descripción:</strong> {{ project.description }}</p>
+        <p><strong>Fecha de inicio:</strong> {{ project.start_date }}</p>
+        <p><strong>Fecha de fin:</strong> {{ project.end_date|default:"No especificada" }}</p>
+        <p><strong>Manager:</strong> {{ project.manager.get_full_name }}</p>
+    </div>
+
+    <h3>Tareas del Proyecto</h3>
+    <a href="{% url 'task_list' project.id %}" class="button">Ver todas las tareas</a>
+    {% if request.user.role == 'manager' %}
+        <a href="{% url 'task_create' project.id %}" class="button">Crear nueva tarea</a>
+    {% endif %}
+
+    <div class="actions">
+        {% if request.user.role == 'manager' and project.manager == request.user or request.user.role == 'admin' %}
+            <a href="{% url 'project_update' project.id %}" class="button">Editar Proyecto</a>
+            <a href="{% url 'project_delete' project.id %}" class="button">Eliminar Proyecto</a>
+        {% endif %}
+        <a href="{% url 'project_list' %}" class="button">Volver a la lista de proyectos</a>
+    </div>
+{% endblock %} 

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Tareas del Proyecto: {{ project.name }}</h2>
+    {% if request.user.role == 'manager' %}
+        <a href="{% url 'task_create' project.id %}" class="button">Crear Nueva Tarea</a>
+    {% endif %}
+    <table>
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th>Fecha Límite</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+                <tr>
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.get_state_display }}</td>
+                    <td>{{ task.get_priority_display }}</td>
+                    <td>{{ task.deadline }}</td>
+                    <td>
+                        <a href="{% url 'task_detail' project.id task.id %}" class="button">Ver</a>
+                        {% if request.user.role == 'manager' %}
+                            <a href="{% url 'task_update' project.id task.id %}" class="button">Editar</a>
+                            <a href="{% url 'task_delete' project.id task.id %}" class="button">Eliminar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No hay tareas en este proyecto.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'project_detail' project.id %}" class="button">Volver al Proyecto</a>
+{% endblock %} 
