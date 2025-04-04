@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Ofertas Extraídas</h2>
+    <ul>
+        {% for offer in offers %}
+            <li>{{ offer.title }} - {{ offer.company }}</li>
+        {% empty %}
+            <li>No se encontraron ofertas.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
