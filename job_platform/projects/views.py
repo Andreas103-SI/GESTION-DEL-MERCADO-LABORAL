@@ -29,21 +29,20 @@ def project_detail(request, project_id):
         return HttpResponseForbidden("No tienes permiso para acceder a este proyecto.")
     return render(request, 'projects/project_detail.html', {'project': project})
 
+
 @role_required('manager')
-def project_update(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
-    # Verificar si el usuario es el manager del proyecto
+def project_update(request, pk):
+    project = get_object_or_404(Project, pk=pk)
     if project.manager != request.user and request.user.role != 'admin':
-        return HttpResponseForbidden("No tienes permiso para editar este proyecto.")
-    
+        return HttpResponseForbidden("No tienes permiso para acceder a este proyecto.")
     if request.method == 'POST':
         form = ProjectForm(request.POST, instance=project)
         if form.is_valid():
             form.save()
-            return redirect('project_detail', project_id=project.id)
+            return redirect('project_list')
     else:
         form = ProjectForm(instance=project)
-    return render(request, 'projects/project_form.html', {'form': form, 'project': project})
+    return render(request, 'projects/project_form.html', {'form': form})
 
 @role_required('manager')
 def project_delete(request, project_id):
@@ -67,7 +66,7 @@ def task_create(request, project_id):
             task.project = project
             task.save()
             form.save_m2m()  # Para guardar relaciones muchos-a-muchos
-            return redirect('project_detail', project_id=project.id)
+            return redirect('project_detail', pk=project.pk)
     else:
         form = TaskForm()
     return render(request, 'projects/task_form.html', {'form': form, 'project': project})

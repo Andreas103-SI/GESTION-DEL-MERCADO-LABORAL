@@ -1,4 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
     <h1>{{ message }}</h1>
+    {% if user.is_authenticated %}
+        <p>Bienvenido, {{ user.username }}</p>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Cerrar Sesión</button>
+        </form>
+    {% else %}
+        <a href="{% url 'login' %}">Iniciar Sesión</a>
+    {% endif %}
 {% endblock %}
