@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Tendencias del Mercado Laboral</h2>
+    <h3>Habilidades Más Demandadas</h3>
+    <ul>
+        {% for skill in skills_demand %}
+            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
+        {% empty %}
+            <li>No hay datos de habilidades.</li>
+        {% endfor %}
+    </ul>
+    <h3>Ofertas por Fuente</h3>
+    <ul>
+        {% for source in sources_count %}
+            <li>{{ source.source }}: {{ source.count }} ofertas</li>
+        {% empty %}
+            <li>No hay datos de fuentes.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'scrape_tecnoempleo' %}">Actualizar Datos</a>
+{% endblock %}
