@@ -1,4 +1,8 @@
 #market_analysis/views
+# Fase 4: Obtención de Datos del Mercado Laboral
+# - Scraper: Extrae ofertas de empleo de Tecnoempleo y guarda títulos, empresas, ubicaciones y habilidades en JobOffer.
+# - Dashboard: Muestra las 5 habilidades más demandadas y el conteo de ofertas por fuente para administradores.
+# - Restricción: Solo accesible para usuarios con rol 'admin' o superusuarios.
 from django.shortcuts import render
 from .models import JobOffer
 from job_platform.views import role_required

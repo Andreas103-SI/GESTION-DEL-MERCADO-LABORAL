@@ -1,11 +1,22 @@
-{% extends 'base.html' %}
-{% block content %}
-    <h2>Ofertas Extraídas</h2>
+<!-- data_integration/templates/data_integration/scrape_results.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ofertas Extraídas</title>
+</head>
+<body>
+    <h1>Ofertas Extraídas</h1>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     <ul>
         {% for offer in offers %}
-            <li>{{ offer.title }} - {{ offer.company }}</li>
-        {% empty %}
-            <li>No se encontraron ofertas.</li>
+            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }})</li>
         {% endfor %}
     </ul>
-{% endblock %}
+</body>
+</html>
