@@ -17,5 +17,9 @@
             <li>No hay datos de fuentes.</li>
         {% endfor %}
     </ul>
-    <a href="{% url 'scrape_tecnoempleo' %}">Actualizar Datos</a>
+    <div>
+        <a href="{% url 'scrape_tecnoempleo' %}">Actualizar Tecnoempleo</a> |
+        <a href="{% url 'scrape_linkedin' %}">Actualizar LinkedIn</a> |
+        <a href="{% url 'scrape_infojobs' %}">Actualizar InfoJobs</a>
+    </div>
 {% endblock %}

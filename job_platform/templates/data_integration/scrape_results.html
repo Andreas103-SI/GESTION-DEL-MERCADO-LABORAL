@@ -1,4 +1,3 @@
-<!-- data_integration/templates/data_integration/scrape_results.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,7 +14,7 @@
     {% endif %}
     <ul>
         {% for offer in offers %}
-            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }})</li>
+            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }}) {% if offer.skills.all %} - Habilidades: {{ offer.skills.all|join:", " }}{% endif %}</li>
         {% endfor %}
     </ul>
 </body>

@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 @role_required('admin')
 def scrape_tecnoempleo(request):
@@ -41,10 +42,7 @@ def scrape_tecnoempleo(request):
                 title=title,
                 company=company,
                 source="Tecnoempleo",
-                defaults={
-                    'location': location,
-                    'publication_date': datetime.now().date()
-                }
+                defaults={'location': location, 'publication_date': datetime.now().date()}
             )
             for skill_elem in skills_elems:
                 skill_name = skill_elem.text.strip()
@@ -57,25 +55,22 @@ def scrape_tecnoempleo(request):
 
 @role_required('admin')
 def scrape_linkedin(request):
-    # Configura opciones para Selenium
     chrome_options = Options()
     chrome_options.add_experimental_option("detach", True)
-    
-    # Usa Selenium Manager para manejar ChromeDriver automáticamente
     driver = webdriver.Chrome(options=chrome_options)
 
     try:
-        # Abre LinkedIn para inicio de sesión
+        # Login
         driver.get("https://www.linkedin.com/login")
-        messages.info(request, "Inicia sesión en LinkedIn manualmente en la ventana que se abrió. Tienes 20 segundos antes de que continúe.")
-        time.sleep(20)  # Espera para inicio de sesión manual
+        print("Inicia sesión en LinkedIn manualmente. Tienes 30 segundos.")
+        time.sleep(30)
 
-        # Navega a la página de empleos
+        # Búsqueda
         driver.get("https://www.linkedin.com/jobs/search/?keywords=desarrollador%20python&location=Asturias%2C%20España")
-        messages.info(request, "Esperando 20 segundos para que la página de empleos cargue completamente.")
-        time.sleep(20)
+        WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, "job-card-list__entity-lockup")))
+        print("Página de empleos cargada.")
 
-        # Hacer scroll para cargar más empleos
+        # Scroll
         last_height = driver.execute_script("return document.body.scrollHeight")
         for _ in range(20):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -85,21 +80,23 @@ def scrape_linkedin(request):
                 break
             last_height = new_height
 
-        # Extrae el HTML
+        # Extraer
         soup = BeautifulSoup(driver.page_source, "html.parser")
         jobs = soup.find_all("div", class_="job-card-list__entity-lockup")
-        
+        print(f"Jobs found: {len(jobs)}")
+
         offers = []
         for job in jobs:
             title_elem = job.find("a", class_="job-card-list__title--link")
             company_elem = job.find("div", class_="artdeco-entity-lockup__subtitle")
             location_elem = job.find("ul", class_="job-card-container__metadata-wrapper").find("li") if job.find("ul", class_="job-card-container__metadata-wrapper") else None
+            # Habilidades (puede requerir clic en la oferta para verlas)
+            skills_elem = job.find_all("span", class_="job-card-skill__name")  # Clase tentativa
 
             title_text = title_elem.text.strip() if title_elem else "Sin título"
-            title_span = title_elem.find("span", {"aria-hidden": "true"}) if title_elem else None
-            title_text = title_span.text.strip() if title_span else title_text
             company_text = company_elem.text.strip() if company_elem else "Sin compañía"
             location_text = location_elem.text.strip() if location_elem else "Sin ubicación"
+            skills_text = [skill.text.strip() for skill in skills_elem] if skills_elem else []
 
             job_obj, created = JobOffer.objects.get_or_create(
                 title=title_text,
@@ -107,15 +104,84 @@ def scrape_linkedin(request):
                 source="LinkedIn",
                 defaults={'location': location_text, 'publication_date': datetime.now().date()}
             )
+            for skill_name in skills_text:
+                skill, _ = Skill.objects.get_or_create(name=skill_name)
+                job_obj.skills.add(skill)
             offers.append(job_obj)
 
         messages.success(request, f"Se encontraron {len(offers)} ofertas de LinkedIn.")
-    
     except Exception as e:
         messages.error(request, f"Error al scrapear LinkedIn: {e}")
         offers = []
-    
     finally:
-        pass  # No cerramos el driver por "detach"
+        pass
+
+    return render(request, 'data_integration/scrape_results.html', {'offers': offers})
+
+@role_required('admin')
+def scrape_infojobs(request):
+    chrome_options = Options()
+    chrome_options.add_experimental_option("detach", True)
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # Navegar y manejar cookies
+        driver.get("https://www.infojobs.net/ofertas-trabajo/asturias")
+        try:
+            # Aceptar cookies si aparece
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "didomi-notice-agree-button"))).click()
+            print("Cookies aceptadas.")
+        except TimeoutException:
+            print("No se encontró popup de cookies.")
+
+        # Esperar carga de ofertas
+        WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "ij-OfferCardContent-description")))
+        print("Página de InfoJobs cargada.")
+
+        # Scroll
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        for _ in range(20):
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+
+        # Extraer
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        jobs = soup.find_all("div", class_="ij-OfferCardContent-description")
+        print(f"Jobs found: {len(jobs)}")
+
+        offers = []
+        for job in jobs:
+            title_elem = job.find("a", class_="ij-OfferCardContent-description-title-link")
+            company_elem = job.find("a", class_="ij-OfferCardContent-description-subtitle-link")
+            location_elem = job.find("span", class_="ij-OfferCardContent-description-list-item-truncate")
+
+            title_text = title_elem.text.strip() if title_elem else "Sin título"
+            company_text = company_elem.text.strip() if company_elem else "Sin compañía"
+            location_text = location_elem.text.strip() if location_elem else "Sin ubicación"
+
+            job_obj, created = JobOffer.objects.get_or_create(
+                title=title_text,
+                company=company_text,
+                source="InfoJobs",
+                defaults={'location': location_text, 'publication_date': datetime.now().date()}
+            )
+            offers.append(job_obj)
+
+        messages.success(request, f"Se encontraron {len(offers)} ofertas de InfoJobs.")
+        if len(offers) == 0:
+            with open("infojobs_debug.html", "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
+            messages.warning(request, "No se encontraron ofertas. Revisa 'infojobs_debug.html'.")
+    except Exception as e:
+        messages.error(request, f"Error al scrapear InfoJobs: {e}")
+        with open("infojobs_debug.html", "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+        offers = []
+    finally:
+        pass
 
     return render(request, 'data_integration/scrape_results.html', {'offers': offers})
