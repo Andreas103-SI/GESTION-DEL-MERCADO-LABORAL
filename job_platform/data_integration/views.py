@@ -60,17 +60,14 @@ def scrape_linkedin(request):
     driver = webdriver.Chrome(options=chrome_options)
 
     try:
-        # Login
         driver.get("https://www.linkedin.com/login")
-        print("Inicia sesión en LinkedIn manualmente. Tienes 30 segundos.")
-        time.sleep(30)
+        messages.info(request, "Inicia sesión en LinkedIn manualmente en la ventana que se abrió. Tienes 40 segundos.")
+        time.sleep(40)  # Aumentado a 40 segundos para login
 
-        # Búsqueda
         driver.get("https://www.linkedin.com/jobs/search/?keywords=desarrollador%20python&location=Asturias%2C%20España")
-        WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, "job-card-list__entity-lockup")))
-        print("Página de empleos cargada.")
+        messages.info(request, "Esperando 40 segundos para que la página de empleos cargue completamente.")
+        time.sleep(40)  # Aumentado a 40 segundos para carga
 
-        # Scroll
         last_height = driver.execute_script("return document.body.scrollHeight")
         for _ in range(20):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -80,23 +77,20 @@ def scrape_linkedin(request):
                 break
             last_height = new_height
 
-        # Extraer
         soup = BeautifulSoup(driver.page_source, "html.parser")
         jobs = soup.find_all("div", class_="job-card-list__entity-lockup")
-        print(f"Jobs found: {len(jobs)}")
-
+        
         offers = []
         for job in jobs:
             title_elem = job.find("a", class_="job-card-list__title--link")
             company_elem = job.find("div", class_="artdeco-entity-lockup__subtitle")
             location_elem = job.find("ul", class_="job-card-container__metadata-wrapper").find("li") if job.find("ul", class_="job-card-container__metadata-wrapper") else None
-            # Habilidades (puede requerir clic en la oferta para verlas)
-            skills_elem = job.find_all("span", class_="job-card-skill__name")  # Clase tentativa
 
             title_text = title_elem.text.strip() if title_elem else "Sin título"
+            title_span = title_elem.find("span", {"aria-hidden": "true"}) if title_elem else None
+            title_text = title_span.text.strip() if title_span else title_text
             company_text = company_elem.text.strip() if company_elem else "Sin compañía"
             location_text = location_elem.text.strip() if location_elem else "Sin ubicación"
-            skills_text = [skill.text.strip() for skill in skills_elem] if skills_elem else []
 
             job_obj, created = JobOffer.objects.get_or_create(
                 title=title_text,
@@ -104,15 +98,14 @@ def scrape_linkedin(request):
                 source="LinkedIn",
                 defaults={'location': location_text, 'publication_date': datetime.now().date()}
             )
-            for skill_name in skills_text:
-                skill, _ = Skill.objects.get_or_create(name=skill_name)
-                job_obj.skills.add(skill)
             offers.append(job_obj)
 
         messages.success(request, f"Se encontraron {len(offers)} ofertas de LinkedIn.")
+    
     except Exception as e:
         messages.error(request, f"Error al scrapear LinkedIn: {e}")
         offers = []
+    
     finally:
         pass
 

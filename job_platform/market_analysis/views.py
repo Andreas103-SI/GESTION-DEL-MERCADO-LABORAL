@@ -1,22 +1,34 @@
-#market_analysis/views
-# Fase 4: Obtención de Datos del Mercado Laboral
-# - Scraper: Extrae ofertas de empleo de Tecnoempleo y guarda títulos, empresas, ubicaciones y habilidades en JobOffer.
-# - Dashboard: Muestra las 5 habilidades más demandadas y el conteo de ofertas por fuente para administradores.
-# - Restricción: Solo accesible para usuarios con rol 'admin' o superusuarios.
 from django.shortcuts import render
-from .models import JobOffer
-from job_platform.views import role_required
 from django.db.models import Count
+from market_analysis.models import JobOffer, Skill
+import json
 
-@role_required('admin')
-def market_dashboard(request):
-    skills_demand = (JobOffer.objects.values('skills__name')
-                     .annotate(count=Count('skills__name'))
-                     .order_by('-count')[:5])
-    sources_count = (JobOffer.objects.values('source')
-                     .annotate(count=Count('source'))
-                     .order_by('-count'))
-    return render(request, 'market_analysis/dashboard.html', {
+def dashboard(request):
+    # Habilidades más demandadas
+    skills_demand = JobOffer.objects.values('skills__name').annotate(count=Count('id')).order_by('-count')[:10]
+    # Filtrar valores nulos y asegurar cadenas válidas
+    skills_labels = json.dumps([skill['skills__name'] for skill in skills_demand if skill['skills__name'] is not None])
+    skills_data = json.dumps([skill['count'] for skill in skills_demand if skill['skills__name'] is not None])
+    
+    # Ofertas por fuente
+    sources_count = JobOffer.objects.values('source').annotate(count=Count('id')).order_by('-count')
+    sources_labels = json.dumps([source['source'] for source in sources_count])
+    sources_data = json.dumps([source['count'] for source in sources_count])
+    
+    # Total de ofertas
+    total_offers = JobOffer.objects.count()
+    
+    # Empresas más activas
+    companies_count = JobOffer.objects.values('company').annotate(count=Count('id')).order_by('-count')[:5]
+
+    context = {
         'skills_demand': skills_demand,
-        'sources_count': sources_count
-    })
+        'sources_count': sources_count,
+        'total_offers': total_offers,
+        'companies_count': companies_count,
+        'skills_labels': skills_labels,
+        'skills_data': skills_data,
+        'sources_labels': sources_labels,
+        'sources_data': sources_data,
+    }
+    return render(request, 'market_analysis/dashboard.html', context)
