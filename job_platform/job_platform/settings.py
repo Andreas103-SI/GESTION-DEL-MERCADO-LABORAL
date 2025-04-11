@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'projects',
     'market_analysis',
     'ai_module',
+    'rolepermissions',
     'data_integration',
 ]
 

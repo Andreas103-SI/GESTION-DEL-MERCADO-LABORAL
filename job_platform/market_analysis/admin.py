@@ -1,6 +1,5 @@
-#market_analysis/admin.py
 from django.contrib import admin
-from .models import JobOffer, MarketData
+from .models import JobOffer, Skill
 
 admin.site.register(JobOffer)
-admin.site.register(MarketData)
+admin.site.register(Skill)

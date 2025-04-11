@@ -1,21 +1,11 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block content %}
-    <h2>Tendencias del Mercado Laboral</h2>
+    <h1>Análisis del Mercado Laboral</h1>
+    <p>Total de ofertas: {{ total_offers }}</p>
     
-    <h3>Total de Ofertas</h3>
-    <p>{{ total_offers }} ofertas registradas</p>
-
-    <h3>Habilidades Más Demandadas</h3>
+    <h3>Habilidades más Demandadas</h3>
     <canvas id="skillsChart" width="400" height="200"></canvas>
-    <ul>
-        {% for skill in skills_demand %}
-            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
-        {% empty %}
-            <li>No hay datos de habilidades.</li>
-        {% endfor %}
-    </ul>
-
+    
     <h3>Ofertas por Fuente</h3>
     <canvas id="sourcesChart" width="400" height="200"></canvas>
     <ul>
@@ -26,38 +16,58 @@
         {% endfor %}
     </ul>
 
-    <h3>Empresas Más Activas</h3>
+    <h3>Empresas más Activas</h3>
     <ul>
         {% for company in companies_count %}
             <li>{{ company.company }}: {{ company.count }} ofertas</li>
-        {% empty %}
-            <li>No hay datos de empresas.</li>
         {% endfor %}
     </ul>
 
-    <div>
-        <a href="{% url 'scrape_tecnoempleo' %}">Actualizar Tecnoempleo</a> |
-        <a href="{% url 'scrape_linkedin' %}">Actualizar LinkedIn</a> |
-        <a href="{% url 'scrape_infojobs' %}">Actualizar InfoJobs</a>
-    </div>
+    <h3>Últimas Ofertas</h3>
+    <ul>
+        {% for offer in recent_offers %}
+            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.source }}) - {{ offer.publication_date }}</li>
+        {% endfor %}
+    </ul>
 
-    <!-- Pasar datos con depuración -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         try {
             window.skillsLabels = {{ skills_labels|safe }};
             window.skillsData = {{ skills_data|safe }};
             window.sourcesLabels = {{ sources_labels|safe }};
             window.sourcesData = {{ sources_data|safe }};
-            console.log("Datos cargados correctamente:", {
-                skillsLabels: window.skillsLabels,
-                skillsData: window.skillsData,
-                sourcesLabels: window.sourcesLabels,
-                sourcesData: window.sourcesData
-            });
+            console.log("Datos cargados:", {skillsLabels: window.skillsLabels, skillsData: window.skillsData, sourcesLabels: window.sourcesLabels, sourcesData: window.sourcesData});
         } catch (e) {
             console.error("Error al cargar datos:", e);
         }
+
+        const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+        new Chart(skillsCtx, {
+            type: 'bar',
+            data: {
+                labels: window.skillsLabels,
+                datasets: [{
+                    label: 'Habilidades',
+                    data: window.skillsData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            }
+        });
+
+        const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
+        new Chart(sourcesCtx, {
+            type: 'pie',
+            data: {
+                labels: window.sourcesLabels,
+                datasets: [{
+                    label: 'Fuentes',
+                    data: window.sourcesData,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                }]
+            }
+        });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'js/charts.js' %}"></script>
 {% endblock %}
