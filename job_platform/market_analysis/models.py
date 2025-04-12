@@ -10,11 +10,11 @@ class JobOffer(models.Model):
     location = models.CharField(max_length=255, blank=True)
     source = models.CharField(max_length=50)
     publication_date = models.DateField()
-    salary = models.CharField(max_length=100, blank=True, null=True)  # Nuevo
+    salary = models.CharField(max_length=100, blank=True, null=True)
     skills = models.ManyToManyField(Skill, blank=True)
 
     class Meta:
-        unique_together = ('title', 'company', 'source')  # Evita duplicados
+        unique_together = ('title', 'company', 'source')
 
     def __str__(self):
         return f"{self.title} - {self.company} ({self.source})"
