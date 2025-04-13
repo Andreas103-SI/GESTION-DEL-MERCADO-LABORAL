@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Scrapers de Empleo</h2>
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">LinkedIn</h5>
+                    <p class="card-text">Extrae ofertas de empleo de LinkedIn en Asturias.</p>
+                    <a href="{% url 'scrape_linkedin' %}" class="btn btn-primary">Ejecutar Scraper de LinkedIn</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Tecnoempleo</h5>
+                    <p class="card-text">Extrae ofertas de empleo de Tecnoempleo en Asturias.</p>
+                    <a href="{% url 'scrape_tecnoempleo' %}" class="btn btn-primary">Ejecutar Scraper de Tecnoempleo</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">InfoJobs</h5>
+                    <p class="card-text">Extrae ofertas de empleo de InfoJobs en Asturias.</p>
+                    <a href="{% url 'scrape_infojobs' %}" class="btn btn-primary">Ejecutar Scraper de InfoJobs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
