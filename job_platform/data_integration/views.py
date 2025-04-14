@@ -1,21 +1,35 @@
-from django.shortcuts import render
 from django.contrib import messages
-from rolepermissions.decorators import has_role_decorator  # Cambiado
+from django.shortcuts import render
 import requests
+from rolepermissions.decorators import has_role_decorator
+from market_analysis.models import JobOffer, Skill
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
+from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime, timedelta
-from market_analysis.models import JobOffer, Skill
+import time
 import os
 import re
+import random
+from dotenv import load_dotenv
 
 
 
+
+
+load_dotenv()
+
+
+
+
+def scrape_index(request):
+    """Vista principal que muestra los botones para ejecutar los diferentes scrapers."""
+    return render(request, "data_integration/scrape_index.html")
 
 # Scraper de Tecnoempleo para la Fase 5:
 # - Extrae 30 ofertas con título, empresa, ubicación, fecha y habilidades.
@@ -24,10 +38,6 @@ import re
 # - Muestra mensaje de rango ('Esta actualización incluye ofertas desde X hasta Y') y 'Se han extraído 30 ofertas'.
 # - Ubicaciones como 'Madrid y otras' y 'Barcelona (Híbrido)' bien parseadas.
 # - Usa tecnoempleo_debug.html para depuración.
-def scrape_index(request):
-    """Vista principal que muestra los botones para ejecutar los diferentes scrapers."""
-    return render(request, "data_integration/scrape_index.html")
-
 @has_role_decorator('admin')
 def scrape_tecnoempleo(request):
     url = "https://www.tecnoempleo.com/ofertas-trabajo/?keyword=desarrollador&provincia=33"
@@ -122,256 +132,405 @@ def scrape_tecnoempleo(request):
 
 
 
+
+
+
 @has_role_decorator('admin')
 def scrape_linkedin(request):
-    """Extrae ofertas de empleo de LinkedIn."""
+    """
+    Extrae ofertas de empleo de LinkedIn para Asturias o remotas en España.
+    Este scraper busca ofertas con múltiples palabras clave, optimizando la velocidad
+    y dividiendo las búsquedas entre Asturias y remotas. Incluye comentarios detallados
+    para que Andrea pueda memorizar y entender cada paso.
+    """
+    # PASO 1: Configurar el navegador Chrome para el scraping
     chrome_options = Options()
     chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     chrome_options.add_experimental_option("detach", True)
     driver = None
     offers = []
 
+    # FUNCIÓN AUXILIAR: Intentar hacer clic en el botón "Ver más" para cargar más ofertas
     def intentar_clic_ver_mas(driver):
-        """Intenta hacer clic en el botón 'Ver más' para cargar más ofertas."""
-        try:
-            ver_mas = WebDriverWait(driver, 5).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.infinite-scroller__show-more-button, button[aria-label*='more jobs'], button[aria-label*='empleos'], button[class*='show-more']"))
-            )
-            driver.execute_script("arguments[0].click();", ver_mas)
-            print("[DEBUG] Clic en 'Ver más' exitoso")
-            return True
-        except:
-            print("[DEBUG] No se encontró 'Ver más'")
-            return False
+        """
+        Busca el botón "Ver más" en la página de búsqueda de LinkedIn y hace clic
+        para cargar más ofertas. Si no lo encuentra, retorna False.
+        """
+        max_attempts = 3  # Reducido para acelerar
+        for attempt in range(max_attempts):
+            try:
+                ver_mas = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button.infinite-scroller__show-more-button, button[aria-label*='more jobs'], button[aria-label*='empleos'], button[class*='show-more']"))
+                )
+                driver.execute_script("arguments[0].click();", ver_mas)
+                print("[DEBUG] Clic en 'Ver más' exitoso")
+                time.sleep(random.uniform(1, 2))  # Reducido para acelerar
+                return True
+            except:
+                print(f"[DEBUG] Intento {attempt+1}/{max_attempts}: No se encontró 'Ver más'")
+                time.sleep(random.uniform(0.5, 1))
+        return False
 
     try:
+        # PASO 2: Iniciar el navegador y comenzar el scraping
         print("[DEBUG] Iniciando scraper de LinkedIn")
-        driver = webdriver.Chrome(options=chrome_options)
-        # 1. Login manual
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        
+        # PASO 3: Hacer login en LinkedIn con las credenciales del archivo .env
         driver.get("https://www.linkedin.com/login")
-        print("[DEBUG] Esperando login manual (60 segundos)...")
-        messages.info(request, "Inicia sesión en LinkedIn manualmente. Tienes 60 segundos para credenciales y posibles CAPTCHAs.")
-        time.sleep(60)
-
-        # 2. Verificar que el navegador sigue abierto
-        try:
-            driver.title
-            print("[DEBUG] Navegador sigue abierto")
-        except Exception as e:
-            print(f"[DEBUG] Error: Navegador cerrado o sesión inválida: {e}")
-            messages.error(request, "Error: El navegador se cerró durante el login o la sesión es inválida. Por favor, no cierres la ventana de Chrome y revisa CAPTCHAs.")
+        print("[DEBUG] Cargando página de login...")
+        email = os.getenv("LINKEDIN_EMAIL")
+        password = os.getenv("LINKEDIN_PASSWORD")
+        if not email or not password:
+            messages.error(request, "Error: No se encontraron credenciales en el archivo .env.")
             return render(request, "data_integration/scrape_results.html", {"offers": [], "num_offers": 0})
 
-        # 3. Verificar login
+        try:
+            email_field = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "username"))
+            )
+            email_field.send_keys(email)
+            password_field = driver.find_element(By.ID, "password")
+            password_field.send_keys(password)
+            driver.find_element(By.XPATH, "//button[@type='submit']").click()
+            print("[DEBUG] Credenciales enviadas")
+            time.sleep(random.uniform(2, 3))  # Reducido para acelerar
+        except Exception as e:
+            print(f"[DEBUG] Error al ingresar credenciales: {e}")
+            messages.error(request, "Error: No se pudo completar el login automático. Revisa las credenciales en .env.")
+            driver.save_screenshot("login_error.png")
+            return render(request, "data_integration/scrape_results.html", {"offers": [], "num_offers": 0})
+
+        # PASO 4: Verificar que el login fue exitoso
         print("[DEBUG] Verificando login...")
         try:
             WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.feed-identity-module, div[class*='feed-container']"))
             )
             print("[DEBUG] Login verificado por presencia de feed")
-            print(f"[DEBUG] URL tras login: {driver.current_url}")
         except Exception as e:
             print(f"[DEBUG] Error en verificación de login: {e}")
-            print(f"[DEBUG] URL tras login: {driver.current_url}")
             messages.error(request, "Error: Login no completado. Revisa credenciales, CAPTCHAs, o popups.")
             driver.save_screenshot("login_error.png")
             return render(request, "data_integration/scrape_results.html", {"offers": [], "num_offers": 0})
 
-        # 4. Cerrar popups
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Dismiss'], button[class*='close'], button[aria-label*='Cerrar']"))
-            ).click()
-            print("[DEBUG] Popup cerrado")
-        except:
-            print("[DEBUG] No se encontraron popups")
-
-        # 5. Buscar ofertas
+        # PASO 5: Buscar ofertas con múltiples palabras clave
         print("[DEBUG] Cargando página de empleos...")
-        driver.get("https://www.linkedin.com/jobs/search/?keywords=desarrollador&location=Asturias%2C%20España&f_TPR=r2592000")
-        try:
-            WebDriverWait(driver, 150).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div.jobs-search--container, div[class*='jobs-search'], section[class*='jobs-search']"))
-            )
-            print("[DEBUG] Contenedor de empleos encontrado")
-            print(f"[DEBUG] URL tras carga: {driver.current_url}")
-        except Exception as e:
-            print(f"[DEBUG] Error en espera de contenedor: {e}")
-            messages.error(request, f"Error: No se cargó la lista de empleos: {e}")
-            driver.save_screenshot("jobs_error.png")
-            return render(request, "data_integration/scrape_results.html", {"offers": [], "num_offers": 0})
+        all_offer_urls = set()
 
-        # 6. Scroll para cargar más
-        print("[DEBUG] Iniciando scrolls...")
-        last_count = 0
-        for i in range(15):  # Aumentado para intentar cargar más ofertas
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div.job-card-container, div.base-card, li.jobs-search-results__list-item"))
-            )
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            jobs = soup.select("div.job-card-container, div.base-card, li.jobs-search-results__list-item")
-            print(f"[DEBUG] Ofertas cargadas tras scroll {i+1}: {len(jobs)}")
-            if len(jobs) > 30:  # Detener si ya tenemos suficientes ofertas
-                print("[DEBUG] Más de 30 ofertas cargadas, deteniendo scrolls")
-                break
-            if len(jobs) == last_count:  # Si no cargan más ofertas, salir
-                print("[DEBUG] No se cargaron más ofertas, deteniendo scrolls")
-                break
-            last_count = len(jobs)
-            if intentar_clic_ver_mas(driver):
-                WebDriverWait(driver, 5).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.job-card-container, div.base-card, li.jobs-search-results__list-item"))
-                )
-            else:
-                print(f"[DEBUG] Intento {i+1}: No se encontró 'Ver más', continuando")
+        # Grupo 1: Buscar en Asturias directamente
+        keywords_asturias = ["desarrollador", "developer", "programador", "software engineer", "ingeniero de software"]
+        for keyword in keywords_asturias:
+            # Buscar directamente en Asturias
+            search_url = f"https://www.linkedin.com/jobs/search/?keywords={keyword}&location=Asturias%2C%20Spain&sort=date"
+            page = 0
+            max_pages = 3  # Limitamos a 3 páginas para acelerar
+            while page < max_pages:
+                paginated_url = f"{search_url}&start={page*25}"
+                driver.get(paginated_url)
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/view/']"))
+                    )
+                    print(f"[DEBUG] Ofertas de búsqueda cargadas correctamente para keyword: {keyword} (Asturias, página {page+1})")
+                except Exception as e:
+                    print(f"[DEBUG] Error al cargar la página de búsqueda para {keyword} (Asturias, página {page+1}): {e}")
+                    break
 
-        # 7. Parsear HTML
-        print("[DEBUG] Parseando HTML...")
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        jobs = soup.select("div.job-card-container, div.base-card, li.jobs-search-results__list-item")
-        print(f"[DEBUG] Ofertas encontradas: {len(jobs)}")
+                # Extraer URLs
+                offer_urls = set()
+                max_offers = 50
+                scroll_attempts = 0
+                max_scrolls = 20  # Reducido para acelerar
+                last_count = 0
+                same_count_retries = 0
 
-        for i, job in enumerate(jobs):
-            retries = 2
+                while len(offer_urls) < max_offers and scroll_attempts < max_scrolls:
+                    soup = BeautifulSoup(driver.page_source, 'lxml')
+                    job_cards = soup.select('a[href*="/jobs/view/"]')
+                    for card in job_cards:
+                        href = card.get('href', '')
+                        if href and "/jobs/view/" in href:
+                            full_url = f"https://www.linkedin.com{href.split('?')[0]}"
+                            offer_urls.add(full_url)
+                            all_offer_urls.add(full_url)
+                            print(f"[DEBUG] URL encontrada: {full_url}")
+                            if len(offer_urls) >= max_offers:
+                                break
+
+                    current_count = len(offer_urls)
+                    if current_count == last_count:
+                        same_count_retries += 1
+                        if same_count_retries >= 3:  # Reducido para acelerar
+                            print("[DEBUG] No se cargaron más ofertas tras 3 intentos, deteniendo scrolls.")
+                            break
+                    else:
+                        same_count_retries = 0
+                    last_count = current_count
+
+                    if intentar_clic_ver_mas(driver):
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/view/']"))
+                        )
+                    else:
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    time.sleep(random.uniform(1, 2))  # Reducido para acelerar
+                    scroll_attempts += 1
+
+                print(f"[DEBUG] Total URLs únicas recolectadas para {keyword} (Asturias, página {page+1}): {len(offer_urls)}")
+                page += 1
+
+        # Grupo 2: Buscar remotas en toda España
+        keywords_remote = ["full stack", "backend", "frontend", "web developer", "data engineer"]
+        for keyword in keywords_remote:
+            search_url = f"https://www.linkedin.com/jobs/search/?keywords={keyword}&location=España&sort=date"
+            page = 0
+            max_pages = 3
+            while page < max_pages:
+                paginated_url = f"{search_url}&start={page*25}"
+                driver.get(paginated_url)
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/view/']"))
+                    )
+                    print(f"[DEBUG] Ofertas de búsqueda cargadas correctamente para keyword: {keyword} (España, página {page+1})")
+                except Exception as e:
+                    print(f"[DEBUG] Error al cargar la página de búsqueda para {keyword} (España, página {page+1}): {e}")
+                    break
+
+                # Extraer URLs
+                offer_urls = set()
+                max_offers = 50
+                scroll_attempts = 0
+                max_scrolls = 20
+                last_count = 0
+                same_count_retries = 0
+
+                while len(offer_urls) < max_offers and scroll_attempts < max_scrolls:
+                    soup = BeautifulSoup(driver.page_source, 'lxml')
+                    job_cards = soup.select('a[href*="/jobs/view/"]')
+                    for card in job_cards:
+                        href = card.get('href', '')
+                        if href and "/jobs/view/" in href:
+                            full_url = f"https://www.linkedin.com{href.split('?')[0]}"
+                            offer_urls.add(full_url)
+                            all_offer_urls.add(full_url)
+                            print(f"[DEBUG] URL encontrada: {full_url}")
+                            if len(offer_urls) >= max_offers:
+                                break
+
+                    current_count = len(offer_urls)
+                    if current_count == last_count:
+                        same_count_retries += 1
+                        if same_count_retries >= 3:
+                            print("[DEBUG] No se cargaron más ofertas tras 3 intentos, deteniendo scrolls.")
+                            break
+                    else:
+                        same_count_retries = 0
+                    last_count = current_count
+
+                    if intentar_clic_ver_mas(driver):
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/jobs/view/']"))
+                        )
+                    else:
+                        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    time.sleep(random.uniform(1, 2))
+                    scroll_attempts += 1
+
+                print(f"[DEBUG] Total URLs únicas recolectadas para {keyword} (España, página {page+1}): {len(offer_urls)}")
+                page += 1
+
+        all_offer_urls = list(all_offer_urls)
+        print(f"[DEBUG] Total URLs únicas recolectadas (todas las keywords): {len(all_offer_urls)}")
+
+        # PASO 6: Procesar cada oferta para extraer detalles
+        asturias_offers = []
+        for i, url in enumerate(all_offer_urls):
+            retries = 3
             while retries > 0:
                 try:
-                    # Extraer información del listado
-                    title_elem = job.select_one("span[aria-hidden='true']")
-                    company_elem = job.select_one("div.artdeco-entity-lockup__subtitle span")
-                    location_elem = job.select_one("div.artdeco-entity-lockup__caption ul.job-card-container__metadata-wrapper li span")
-                    date_elem = job.select_one("time[datetime]")
+                    print(f"[DEBUG] Procesando oferta {i+1}: {url}")
+                    driver.get(url)
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.TAG_NAME, "body"))
+                    )
+                    time.sleep(random.uniform(1, 2))  # Reducido para acelerar
+                    soup = BeautifulSoup(driver.page_source, 'lxml')
 
-                    # Limpiar texto
-                    title_text = title_elem.text.strip() if title_elem else "Sin título"
-                    company_text = company_elem.text.strip() if company_elem else "Sin compañía"
-                    location_text = location_elem.text.strip() if location_elem else "Sin ubicación"
-                    location_text = re.sub(r'\s+', ' ', location_text)
+                    title_tag = soup.select_one('h1.top-card-layout__title') or soup.select_one('.job-details-jobs-unified-top-card__job-title')
+                    title = title_tag.get_text(strip=True)[:255] if title_tag else "Sin título"
 
-                    print(f"[DEBUG] Oferta {i+1} - Título: {title_text}, Compañía: {company_text}, Ubicación: {location_text}")
+                    company_tag = soup.select_one('a.topcard__org-name-link') or soup.select_one('.job-details-jobs-unified-top-card__company-name a')
+                    company = company_tag.get_text(strip=True)[:255] if company_tag else "Sin compañía"
 
-                    # Procesar fecha
-                    try:
-                        if date_elem and date_elem.get("datetime"):
-                            pub_date = datetime.strptime(date_elem["datetime"], "%Y-%m-%d").date()
+                    location_tag = soup.select_one('.artdeco-entity-lockup__caption div[dir="ltr"]')
+                    description_tag = soup.select_one('div.jobs-description__content') or soup.select_one('.jobs-box__html-content')
+                    description = description_tag.get_text(strip=True).lower() if description_tag else "No especificada"
+
+                    if location_tag:
+                        location_text = location_tag.get_text(strip=True)
+                        if '(' in location_text and ')' in location_text:
+                            location = location_text.split('(')[0].strip()[:255]
+                            modality = location_text[location_text.find('(')+1:location_text.find(')')].strip().lower()
                         else:
-                            date_text = date_elem.text.strip().lower() if date_elem else ""
-                            pub_date = datetime.now().date()
-                            if any(x in date_text for x in ["hora", "horas", "hour", "hours"]):
-                                pub_date = datetime.now().date()
-                            elif any(x in date_text for x in ["día", "días", "day", "days"]):
-                                days = int(re.search(r'(\d+)', date_text).group(1)) if re.search(r'(\d+)', date_text) else 1
-                                pub_date -= timedelta(days=days)
-                            elif any(x in date_text for x in ["semana", "semanas", "week", "weeks"]):
-                                weeks = int(re.search(r'(\d+)', date_text).group(1)) if re.search(r'(\d+)', date_text) else 1
-                                pub_date -= timedelta(weeks=weeks)
-                            elif any(x in date_text for x in ["mes", "meses", "month", "months"]):
-                                months = int(re.search(r'(\d+)', date_text).group(1)) if re.search(r'(\d+)', date_text) else 1
-                                pub_date -= timedelta(days=months*30)
-                    except Exception as e:
-                        print(f"[DEBUG] Error en fecha para '{title_text}': {e}")
-                        pub_date = datetime.now().date()
+                            location = location_text[:255]
+                            modality = ""
+                    else:
+                        location = "Ubicación no especificada"
+                        modality = ""
 
-                    # Intentar extraer habilidades visitando la oferta
-                    job_link = job.select_one("a.base-card__full-link")
+                    is_asturias = any(loc in location for loc in ["Asturias", "Gijón", "Oviedo"])
+                    remote_terms = ["remoto", "remote", "teletrabajo", "100% remoto", "telecommute", "work from home"]
+                    is_remote = any(term in modality for term in remote_terms) or any(term in description for term in remote_terms)
+                    if is_asturias:
+                        final_location = location
+                    elif is_remote:
+                        final_location = "España (Remoto)"
+                    else:
+                        print(f"[DEBUG] Oferta {i+1} descartada: No está en Asturias ni es remota ({location}, {modality})")
+                        break
+
                     skills_list = []
-                    if job_link and 'href' in job_link.attrs:
-                        job_url = job_link['href']
-                        if not job_url.startswith("https://"):
-                            job_url = "https://www.linkedin.com" + job_url
-                        print(f"[DEBUG] Visitando oferta {i+1}: {job_url}")
-                        driver.get(job_url)
-                        try:
-                            WebDriverWait(driver, 10).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, "div.description__text, section[class*='jobs-description']"))
-                            )
-                            print("[DEBUG] Página de la oferta cargada correctamente")
-                        except Exception as e:
-                            print(f"[DEBUG] Error al cargar página de la oferta {i+1}: {e}")
-                            driver.get("https://www.linkedin.com/jobs/search/?keywords=desarrollador&location=Asturias%2C%20España&f_TPR=r2592000")
-                            WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, "div.job-card-container, div.base-card, li.jobs-search-results__list-item"))
-                            )
-                            retries -= 1
-                            continue
-                        job_soup = BeautifulSoup(driver.page_source, "html.parser")
-                        skills_elems = job_soup.select("span.job-criteria__text--criteria, li.description__job-criteria-item, span[class*='skills']")
-                        skills_list = [s.text.strip() for s in skills_elems if s.text.strip()]
-                        print(f"[DEBUG] Habilidades encontradas para '{title_text}': {skills_list}")
-                        driver.get("https://www.linkedin.com/jobs/search/?keywords=desarrollador&location=Asturias%2C%20España&f_TPR=r2592000")
-                        WebDriverWait(driver, 5).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, "div.job-card-container, div.base-card, li.jobs-search-results__list-item"))
-                        )
+                    skills_link = soup.select_one('a[href*="#HYM"][data-test-app-aware-link]')
+                    skills_section = soup.select('ul span li')
+                    if skills_link and "Aptitudes:" in skills_link.get_text():
+                        skills_text = skills_link.get_text(strip=True).replace("Aptitudes:", "").split(" y ")[0].split(", ")
+                        skills_list = [skill.strip() for skill in skills_text if skill.strip() and "desarrollo" not in skill.lower()]
+                    elif skills_section:
+                        skills_list = [skill.get_text(strip=True) for skill in skills_section if skill.get_text(strip=True) and "desarrollo" not in skill.lower()]
+                    elif description:
+                        known_skills = [
+                            'python', 'javascript', 'java', 'sql', 'node.js', 'react', 'django', 'html', 'css',
+                            'git', 'docker', 'agile', 'scrum', 'teamwork', 'communication', 'problem-solving',
+                            'leadership', 'adaptability', 'typescript', 'aws', 'mongodb', 'postgresql', 'linux',
+                            'microservicios', '.net framework', 'asp.net mvc', 'hibernate', 'kubernetes', 'php',
+                            'laravel', 'react.js', '.net core'
+                        ]
+                        skills_list = [skill for skill in known_skills if skill.lower() in description]
+                    print(f"[DEBUG] Habilidades encontradas para '{title}': {skills_list}")
 
-                    # Guardar oferta
+                    date_tag = soup.select_one('time[datetime]') or soup.select_one('span.jobs-unified-top-card__posted-date')
+                    if date_tag:
+                        if date_tag.has_attr('datetime'):
+                            try:
+                                pub_date = datetime.strptime(date_tag['datetime'], "%Y-%m-%d").date()
+                                print(f"[DEBUG] Fecha (desde datetime): {pub_date}")
+                            except:
+                                date_text = date_tag.get_text(strip=True).lower()
+                                pub_date = parse_relative_date(date_text)
+                        else:
+                            date_text = date_tag.get_text(strip=True).lower()
+                            pub_date = parse_relative_date(date_text)
+                    else:
+                        print("[DEBUG] Fecha no encontrada, usando fecha actual.")
+                        pub_date = datetime.now().date()
+                    print(f"[DEBUG] Fecha final para '{title}': {pub_date}")
+
                     job_obj, created = JobOffer.objects.get_or_create(
-                        title=title_text,
-                        company=company_text,
+                        title=title,
+                        company=company,
                         source="LinkedIn",
                         publication_date=pub_date,
                         defaults={
-                            "location": location_text,
+                            "location": final_location,
                             "salary": None
                         }
                     )
 
-                    # Guardar habilidades
                     if created:
                         for skill_name in skills_list:
                             if skill_name:
                                 skill, _ = Skill.objects.get_or_create(name=skill_name)
                                 job_obj.skills.add(skill)
                         offers.append(job_obj)
-                        print(f"[DEBUG] Oferta {i+1} guardada: {title_text} - {company_text} - {location_text} - {pub_date} - Habilidades: {skills_list}")
-                    break  # Salir del bucle de reintentos si tiene éxito
+                        if is_asturias:
+                            asturias_offers.append(job_obj)
+                        print(f"[DEBUG] Oferta {i+1} guardada: {title} - {company} - {final_location} - {pub_date} - Habilidades: {skills_list}")
+                    break
+
                 except Exception as e:
-                    print(f"[DEBUG] Error procesando oferta {i+1} (Intento {2-retries}): {e}")
+                    print(f"[DEBUG] Error procesando oferta {i+1} (Intento {3-retries}): {e}")
                     retries -= 1
                     if retries == 0:
-                        print(f"[DEBUG] Oferta {i+1} descartada tras 2 intentos")
+                        print(f"[DEBUG] Oferta {i+1} descartada tras 3 intentos")
                         continue
-                    WebDriverWait(driver, 5).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "div.job-card-container, div.base-card, li.jobs-search-results__list-item"))
-                    )
+                    time.sleep(random.uniform(3, 5))
 
-        # 8. Guardar HTML de debug
+            if len(offers) >= 25:
+                print("[DEBUG] Se han recolectado 25 ofertas, deteniendo procesamiento.")
+                break
+
+        # PASO 7: Guardar el HTML de la página para depuración
         debug_path = os.path.join(os.getcwd(), "linkedin_debug.html")
         with open(debug_path, "w", encoding="utf-8") as f:
             f.write(driver.page_source)
         print(f"[DEBUG] HTML guardado en {debug_path}")
 
-        # 9. Mensajes
+        # PASO 8: Mostrar mensajes con los resultados
         if offers:
             min_date = min(o.publication_date for o in offers).strftime("%d/%m/%Y")
             max_date = max(o.publication_date for o in offers).strftime("%d/%m/%Y")
             messages.success(request, f"Esta actualización incluye ofertas desde {min_date} hasta {max_date}.")
             messages.success(request, f"Se han extraído {len(offers)} ofertas de LinkedIn.")
+            if asturias_offers:
+                messages.info(request, f"De las cuales {len(asturias_offers)} son de Asturias (el resto son remotas).")
+            else:
+                messages.warning(request, "No se encontraron ofertas en Asturias, pero se incluyeron remotas.")
         else:
             messages.warning(request, "No se encontraron ofertas. Revisa linkedin_debug.html.")
             driver.save_screenshot("no_offers.png")
 
     except Exception as e:
+        # PASO 9: Manejar errores generales
         print(f"[DEBUG] Error general: {e}")
         messages.error(request, f"Error al scrapear LinkedIn: {e}")
         if driver:
-            try:
-                driver.save_screenshot("general_error.png")
-            except:
-                print("[DEBUG] No se pudo tomar screenshot: navegador cerrado")
+            driver.save_screenshot("general_error.png")
 
     finally:
+        # PASO 10: Cerrar el navegador al finalizar
         if driver:
             try:
                 driver.quit()
             except:
                 print("[DEBUG] No se pudo cerrar el driver: ya estaba cerrado")
 
+    # PASO 11: Renderizar la página con los resultados
     context = {
         "offers": offers,
         "num_offers": len(offers)
     }
     print(f"[DEBUG] Renderizando template con {len(offers)} ofertas")
     return render(request, "data_integration/scrape_results.html", context)
+
+# FUNCIÓN AUXILIAR: Calcular fechas relativas
+def parse_relative_date(date_text):
+    """
+    Convierte textos como 'hace 2 días' en una fecha absoluta.
+    """
+    now = datetime.now().date()
+    date_text = date_text.lower()
+    if "hace" in date_text:
+        match = re.search(r'(\d+)\s*(hora|día|semana|mes)', date_text)
+        if match:
+            value, unit = match.groups()
+            value = int(value)
+            if "hora" in unit:
+                return now
+            elif "día" in unit:
+                return now - timedelta(days=value)
+            elif "semana" in unit:
+                return now - timedelta(weeks=value)
+            elif "mes" in unit:
+                return now - timedelta(days=value * 30)
+    return now
+
+
+
 
 
 @has_role_decorator('admin')
