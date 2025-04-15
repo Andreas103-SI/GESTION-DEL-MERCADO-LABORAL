@@ -1,0 +1,40 @@
+# WinDSURF Rules - Reglas de Desarrollo y Dependencias
+
+## Reglas de Desarrollo
+1. **Convenciones de Django**:
+   - Estructura por apps (`data_integration`, `market_analysis`, `users`, `projects`).
+   - Modelos en `models.py`, vistas en `views.py`, plantillas en `templates/<app>/`.
+2. **Documentación**:
+   - Actualizar `docs/proyecto.md` con cada cambio importante.
+   - Usar comentarios y docstrings en el código (p.ej., en `scrape_tecnoempleo`).
+3. **Pruebas**:
+   - Escribir tests unitarios para scrapers en `market_analysis/tests.py`.
+   - Ejecutar `python manage.py test market_analysis` antes de commits grandes.
+4. **Entorno Virtual**:
+   - Usar `venv` en `/Users/ANDREASIERRA/Desktop/GESTION-DEL-MERCADO-LABORAL/job_platform/venv`.
+   - Activar con `source venv/bin/activate`.
+5. **Control de Versiones**:
+   - Commits con formato “Fase X: [descripción]” (p.ej., “Fase 5: LinkedIn scraper actualizado”).
+   - Incluir cambios en `views.py`, `tests.py`, `templates/`, `docs/`.
+6. **Código Limpio**:
+   - Seguir PEP 8 (nombres, espaciado).
+   - Usar `try-except` para errores (p.ej., en `requests.get`, Selenium).
+   - Evitar duplicados con `JobOffer.objects.get_or_create`.
+7. **Scraping Seguro**:
+   - LinkedIn: Usar autenticación manual (90 segundos), no API, para respetar términos.
+   - Tecnoempleo/InfoJobs: Scraping público, respetar límites de peticiones.
+
+## Dependencias
+Basado en el entorno virtual (`pip list`, 13/04/2025):
+- **django==4.2.20**: Framework principal para la aplicación web.
+- **beautifulsoup4==4.13.3**: Parseo de HTML para scrapers (Tecnoempleo, InfoJobs, LinkedIn).
+- **selenium==4.31.0**: Automatización de LinkedIn con login manual.
+- **requests==2.32.3**: Peticiones HTTP para Tecnoempleo e InfoJobs.
+- **psycopg2-binary==2.9.10**: Adaptador para PostgreSQL (base de datos).
+- **django-role-permissions==3.2.0**: Gestión de roles (`admin`, `project_manager`, `collaborator`).
+- **urllib3==1.26.18**: Manejo de conexiones HTTP.
+- Otras: `asgiref==3.8.1`, `soupsieve==2.6`, `trio==0.29.0`, etc., para soporte.
+- **Notas**:
+  - Desarrollo en Python 3.9.
+  - Compatible con SQLite para pruebas.
+  - **No usamos LinkedIn API**; scraping con Selenium para LinkedIn.
