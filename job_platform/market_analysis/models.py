@@ -19,3 +19,15 @@ class JobOffer(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.company} ({self.source})"
+
+class MarketData(models.Model):
+    date = models.DateField()
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    demand_count = models.PositiveIntegerField()
+    source = models.CharField(max_length=50)
+
+    class Meta:
+        unique_together = ('date', 'skill', 'source')
+
+    def __str__(self):
+        return f"{self.skill.name} - {self.demand_count} ({self.source}, {self.date})"
