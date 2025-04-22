@@ -1,10 +1,13 @@
-from django.shortcuts import render
+# market_analysis/views.py
+from django.shortcuts import render, redirect
 from django.db.models import Count
+from django.contrib import messages
 from market_analysis.models import JobOffer, Skill, MarketData
 from ai_module.recommendations import recommend_tasks
 from ai_module.predictions import get_future_skill_trends
 from datetime import datetime, timedelta
 import json
+from data_integration.scrapers.linkedin import scrape_linkedin
 
 def dashboard(request):
     one_month_ago = datetime.now().date() - timedelta(days=30)
@@ -84,3 +87,20 @@ def dashboard(request):
         'asturias_data': asturias_data,
     }
     return render(request, 'market_analysis/dashboard.html', context)
+
+def update_scraper(request):
+    if request.method == 'POST':
+        source = request.POST.get('source')
+        if source == 'LinkedIn':
+            try:
+                scrape_linkedin(request)  # Run LinkedIn scraper
+                messages.success(request, 'LinkedIn scraper ejecutado con éxito.')
+            except Exception as e:
+                messages.error(request, f'Error al ejecutar LinkedIn scraper: {e}')
+        elif source == 'Tecnoempleo':
+            # Placeholder for Tecnoempleo scraper
+            messages.info(request, 'Tecnoempleo scraper no implementado aún.')
+        else:
+            messages.error(request, 'Fuente no válida.')
+        return redirect('dashboard')  # Redirect back to dashboard
+    return redirect('dashboard')

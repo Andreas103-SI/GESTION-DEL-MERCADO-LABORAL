@@ -1,7 +1,9 @@
+# market_analysis/models.py
 from django.db import models
+from django.contrib.postgres.fields import CICharField  # For PostgreSQL case-insensitive field
 
 class Skill(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = CICharField(max_length=100, unique=True)  # Changed to CICharField for case-insensitive uniqueness
     def __str__(self): return self.name
 
 class JobOffer(models.Model):

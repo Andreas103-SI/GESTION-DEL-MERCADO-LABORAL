@@ -15,9 +15,11 @@
                     <h5 class="card-title">{{ offer.title }} - {{ offer.company }}</h5>
                     <p class="card-text">{{ offer.location }} - Publicado: {{ offer.publication_date|date:"d/m/Y" }}</p>
                     <p class="card-text">Habilidades: 
-                        {% for skill in offer.skills.all %}
-                            {{ skill.name }}{% if not forloop.last %}, {% endif %}
-                        {% endfor %}
+                        {% if offer.required_skills %}
+                            {{ offer.required_skills|join:", " }}
+                        {% else %}
+                            No especificadas
+                        {% endif %}
                     </p>
                 </div>
             </div>

@@ -11,5 +11,6 @@ urlpatterns = [
     path('', include('projects.urls')),
     path('data/', include('data_integration.urls')),
     path('market/', include('market_analysis.urls')),
+    path('data/', include('market_analysis.urls')),
     
 ]
