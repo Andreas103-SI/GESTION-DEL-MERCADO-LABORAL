@@ -21,6 +21,8 @@ from dotenv import load_dotenv
 
 
 
+
+
 # Scraper de Tecnoempleo para la Fase 5:
 # - Extrae 30 ofertas con título, empresa, ubicación, fecha y habilidades.
 # - Fechas correctas (11/04/2025 a 12/04/2025), sin fallback.

@@ -8,7 +8,7 @@ from ai_module.predictions import get_future_skill_trends
 from datetime import datetime, timedelta
 import json
 from data_integration.scrapers.linkedin import scrape_linkedin
-from .tasks import run_linkedin_scraper, run_tecnoempleo_scraper
+from data_integration.scrapers.tecnoempleo import scrape_tecnoempleo
 
 def dashboard(request):
     one_month_ago = datetime.now().date() - timedelta(days=30)
@@ -97,16 +97,16 @@ def update_scraper(request):
         source = request.POST.get('source')
         if source == 'LinkedIn':
             try:
-                run_linkedin_scraper.delay(request.user.id)
-                messages.info(request, 'Scraper de LinkedIn iniciado. Los datos se actualizarán pronto.')
+                scrape_linkedin(request)
+                messages.info(request, 'Datos de LinkedIn actualizados.')
             except Exception as e:
-                messages.error(request, f'Error al iniciar el scraper de LinkedIn: {e}')
+                messages.error(request, f'Error al actualizar LinkedIn: {e}')
         elif source == 'Tecnoempleo':
             try:
-                run_tecnoempleo_scraper.delay(request.user.id)
-                messages.info(request, 'Scraper de Tecnoempleo iniciado. Los datos se actualizarán pronto.')
+                scrape_tecnoempleo(request)
+                messages.success(request, 'Tecnoempleo se actualizó correctamente.')
             except Exception as e:
-                messages.error(request, f'Error al iniciar el scraper de Tecnoempleo: {e}')
+                messages.error(request, f'Error al ejecutar el scraper de Tecnoempleo: {e}')
         else:
             messages.error(request, 'Fuente no válida.')
         return redirect('dashboard')
