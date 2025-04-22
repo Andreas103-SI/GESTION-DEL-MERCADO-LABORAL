@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2>Dashboard de Análisis de Mercado</h2>
+    <h2>Panel de Análisis de Mercado</h2>
 
     <!-- Mensajes -->
     {% if messages %}
@@ -23,6 +23,24 @@
             <input type="hidden" name="source" value="Tecnoempleo">
             <button type="submit" class="btn btn-primary">Actualizar Tecnoempleo</button>
         </form>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="mb-4">
+        <h4>Ofertas por Fuente</h4>
+        <canvas id="sourcesChart" width="400" height="200"></canvas>
+    </div>
+    <div class="mb-4">
+        <h4>Habilidades más Demandadas</h4>
+        <canvas id="skillsChart" width="400" height="200"></canvas>
+    </div>
+    <div class="mb-4">
+        <h4>Habilidades en Asturias</h4>
+        {% if asturias_skills %}
+            <canvas id="asturiasChart" width="400" height="200"></canvas>
+        {% else %}
+            <p>No hay datos de habilidades en Asturias.</p>
+        {% endif %}
     </div>
 
     <!-- Resumen de ofertas por fuente -->
@@ -54,7 +72,7 @@
     {% if recent_offers %}
         <ul>
         {% for offer in recent_offers %}
-            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.source }}) - {{ offer.publication_date|date:"F j, Y" }}</li>
+            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.source }}) - {{ offer.publication_date|date:"d F Y" }}</li>
         {% endfor %}
         </ul>
     {% else %}
@@ -66,7 +84,7 @@
     {% if skills_demand %}
         <ul>
         {% for skill in skills_demand %}
-            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
+            <li>{{ skill.skills__name|capfirst }}: {{ skill.count }} ofertas</li>
         {% endfor %}
         </ul>
     {% else %}
@@ -78,7 +96,7 @@
     {% if asturias_skills %}
         <ul>
         {% for skill in asturias_skills %}
-            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
+            <li>{{ skill.skills__name|capfirst }}: {{ skill.count }} ofertas</li>
         {% endfor %}
         </ul>
     {% else %}
@@ -92,7 +110,7 @@
         {% if skills %}
             <ul>
             {% for skill in skills %}
-                <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
+                <li>{{ skill.name|capfirst }}: {{ skill.count }} ofertas</li>
             {% endfor %}
             </ul>
         {% else %}
@@ -114,9 +132,84 @@
         <h4>Predicciones de Habilidades Futuras</h4>
         <ul>
         {% for skill in future_skills %}
-            <li>{{ skill }}</li>
+            <li>{{ skill|capfirst }}</li>
         {% endfor %}
         </ul>
     {% endif %}
 </div>
+
+<!-- Incluir Chart.js y scripts para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Gráfico de ofertas por fuente
+    const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
+    new Chart(sourcesCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ sources_labels|safe }},
+            datasets: [{
+                label: 'Ofertas por Fuente',
+                data: {{ sources_data|safe }},
+                backgroundColor: ['#007bff', '#28a745'],
+                borderColor: ['#0056b3', '#218838'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de habilidades más demandadas
+    const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+    new Chart(skillsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ skills_labels|safe }},
+            datasets: [{
+                label: 'Habilidades Demandadas',
+                data: {{ skills_data|safe }},
+                backgroundColor: '#007bff',
+                borderColor: '#0056b3',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de habilidades en Asturias
+    {% if asturias_skills %}
+    const asturiasCtx = document.getElementById('asturiasChart').getContext('2d');
+    new Chart(asturiasCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ asturias_labels|safe }},
+            datasets: [{
+                label: 'Habilidades en Asturias',
+                data: {{ asturias_data|safe }},
+                backgroundColor: '#28a745',
+                borderColor: '#218838',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
 {% endblock %}

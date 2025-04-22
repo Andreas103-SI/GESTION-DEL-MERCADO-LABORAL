@@ -1,3 +1,4 @@
+# job_platform/job_platform/urls.py
 from django.contrib import admin
 from django.urls import path, include
 from .views import home, restricted_view
@@ -10,7 +11,5 @@ urlpatterns = [
     path('restricted/', restricted_view, name='restricted'),
     path('', include('projects.urls')),
     path('data/', include('data_integration.urls')),
-    path('market/', include('market_analysis.urls')),
     path('data/', include('market_analysis.urls')),
-    
 ]

@@ -8,13 +8,14 @@ from ai_module.predictions import get_future_skill_trends
 from datetime import datetime, timedelta
 import json
 from data_integration.scrapers.linkedin import scrape_linkedin
+from .tasks import run_linkedin_scraper, run_tecnoempleo_scraper
 
 def dashboard(request):
     one_month_ago = datetime.now().date() - timedelta(days=30)
     
     # Habilidades más demandadas (global)
     skills_demand = JobOffer.objects.filter(publication_date__gte=one_month_ago).values('skills__name').annotate(count=Count('id')).order_by('-count')[:10]
-    skills_labels = json.dumps([skill['skills__name'] for skill in skills_demand if skill['skills__name']])
+    skills_labels = json.dumps([skill['skills__name'].capitalize() for skill in skills_demand if skill['skills__name']])
     skills_data = json.dumps([skill['count'] for skill in skills_demand if skill['skills__name']])
     
     # Ofertas por fuente
@@ -27,7 +28,7 @@ def dashboard(request):
         publication_date__gte=one_month_ago,
         location__icontains='Asturias'
     ).values('skills__name').annotate(count=Count('id')).order_by('-count')[:5]
-    asturias_labels = json.dumps([skill['skills__name'] for skill in asturias_skills if skill['skills__name']])
+    asturias_labels = json.dumps([skill['skills__name'].capitalize() for skill in asturias_skills if skill['skills__name']])
     asturias_data = json.dumps([skill['count'] for skill in asturias_skills if skill['skills__name']])
     
     # Comparación entre plataformas
@@ -38,7 +39,7 @@ def dashboard(request):
             source=source
         ).values('skills__name').annotate(count=Count('id')).order_by('-count')[:3]
         platform_comparison[source] = [
-            {'name': skill['skills__name'], 'count': skill['count']}
+            {'name': skill['skills__name'].capitalize(), 'count': skill['count']}
             for skill in skills if skill['skills__name']
         ]
     
@@ -89,18 +90,24 @@ def dashboard(request):
     return render(request, 'market_analysis/dashboard.html', context)
 
 def update_scraper(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Debes iniciar sesión para actualizar los datos.')
+        return redirect('dashboard')
     if request.method == 'POST':
         source = request.POST.get('source')
         if source == 'LinkedIn':
             try:
-                scrape_linkedin(request)  # Run LinkedIn scraper
-                messages.success(request, 'LinkedIn scraper ejecutado con éxito.')
+                run_linkedin_scraper.delay(request.user.id)
+                messages.info(request, 'Scraper de LinkedIn iniciado. Los datos se actualizarán pronto.')
             except Exception as e:
-                messages.error(request, f'Error al ejecutar LinkedIn scraper: {e}')
+                messages.error(request, f'Error al iniciar el scraper de LinkedIn: {e}')
         elif source == 'Tecnoempleo':
-            # Placeholder for Tecnoempleo scraper
-            messages.info(request, 'Tecnoempleo scraper no implementado aún.')
+            try:
+                run_tecnoempleo_scraper.delay(request.user.id)
+                messages.info(request, 'Scraper de Tecnoempleo iniciado. Los datos se actualizarán pronto.')
+            except Exception as e:
+                messages.error(request, f'Error al iniciar el scraper de Tecnoempleo: {e}')
         else:
             messages.error(request, 'Fuente no válida.')
-        return redirect('dashboard')  # Redirect back to dashboard
+        return redirect('dashboard')
     return redirect('dashboard')
