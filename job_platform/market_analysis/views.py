@@ -66,9 +66,21 @@ def dashboard(request):
     # Predicciones de habilidades futuras
     future_skills = get_future_skill_trends()
 
+    # Ofertas recientes con filtro de búsqueda
+    search_query = request.GET.get('search', '')
+    recent_offers = JobOffer.objects.filter(publication_date__gte=one_month_ago)
+    if search_query:
+        recent_offers = recent_offers.filter(
+            title__icontains=search_query
+        ) | recent_offers.filter(
+            company__icontains=search_query
+        ) | recent_offers.filter(
+            location__icontains=search_query
+        )
+    recent_offers = recent_offers.order_by('-publication_date')[:10]
+
     total_offers = JobOffer.objects.filter(publication_date__gte=one_month_ago).count()
     companies_count = JobOffer.objects.filter(publication_date__gte=one_month_ago).values('company').annotate(count=Count('id')).order_by('-count')[:5]
-    recent_offers = JobOffer.objects.filter(publication_date__gte=one_month_ago).order_by('-publication_date')[:10]
 
     context = {
         'skills_demand': skills_demand,
@@ -86,6 +98,7 @@ def dashboard(request):
         'sources_data': sources_data,
         'asturias_labels': asturias_labels,
         'asturias_data': asturias_data,
+        'search_query': search_query,  # Añade search_query al contexto
     }
     return render(request, 'market_analysis/dashboard.html', context)
 

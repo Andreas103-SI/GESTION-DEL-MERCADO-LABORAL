@@ -1,215 +1,143 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container mt-4">
-    <h2>Panel de Análisis de Mercado</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard de Ofertas</title>
+    <style>
+        .section { margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; }
+        h1, h2 { color: #333; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard de Ofertas</h1>
 
-    <!-- Mensajes -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Botones de actualización -->
-    <div class="mb-4">
-        <h4>Actualizar Datos</h4>
-        <form method="post" action="{% url 'update_scraper' %}" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="source" value="LinkedIn">
-            <button type="submit" class="btn btn-primary">Actualizar LinkedIn</button>
-        </form>
-        <form method="post" action="{% url 'update_scraper' %}" class="d-inline">
-            {% csrf_token %}
-            <input type="hidden" name="source" value="Tecnoempleo">
-            <button type="submit" class="btn btn-primary">Actualizar Tecnoempleo</button>
+    <!-- Formulario de búsqueda para ofertas -->
+    <div class="section">
+        <h2>Filtrar Ofertas Recientes</h2>
+        <form method="get">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Buscar por título, empresa o ubicación">
+            <button type="submit">Buscar</button>
         </form>
     </div>
-
-    <!-- Gráficos -->
-    <div class="mb-4">
-        <h4>Ofertas por Fuente</h4>
-        <canvas id="sourcesChart" width="400" height="200"></canvas>
-    </div>
-    <div class="mb-4">
-        <h4>Habilidades más Demandadas</h4>
-        <canvas id="skillsChart" width="400" height="200"></canvas>
-    </div>
-    <div class="mb-4">
-        <h4>Habilidades en Asturias</h4>
-        {% if asturias_skills %}
-            <canvas id="asturiasChart" width="400" height="200"></canvas>
-        {% else %}
-            <p>No hay datos de habilidades en Asturias.</p>
-        {% endif %}
-    </div>
-
-    <!-- Resumen de ofertas por fuente -->
-    <h4>Ofertas por Fuente</h4>
-    {% if sources_count %}
-        <ul>
-        {% for source in sources_count %}
-            <li>{{ source.source }}: {{ source.count }} ofertas</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No hay datos de ofertas disponibles.</p>
-    {% endif %}
-
-    <!-- Empresas más activas -->
-    <h4>Empresas más Activas</h4>
-    {% if companies_count %}
-        <ul>
-        {% for company in companies_count %}
-            <li>{{ company.company }}: {{ company.count }} ofertas</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No hay datos de empresas disponibles.</p>
-    {% endif %}
-
-    <!-- Últimas ofertas -->
-    <h4>Últimas Ofertas</h4>
-    {% if recent_offers %}
-        <ul>
-        {% for offer in recent_offers %}
-            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.source }}) - {{ offer.publication_date|date:"d F Y" }}</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>No hay ofertas recientes.</p>
-    {% endif %}
 
     <!-- Habilidades más demandadas -->
-    <h4>Habilidades más Demandadas</h4>
-    {% if skills_demand %}
+    <div class="section">
+        <h2>Habilidades más demandadas (último mes)</h2>
         <ul>
-        {% for skill in skills_demand %}
-            <li>{{ skill.skills__name|capfirst }}: {{ skill.count }} ofertas</li>
-        {% endfor %}
+            {% for skill in skills_demand %}
+                {% if skill.skills__name %}
+                    <li>{{ skill.skills__name|capitalize }}: {{ skill.count }} ofertas</li>
+                {% endif %}
+            {% empty %}
+                <li>No hay datos de habilidades.</li>
+            {% endfor %}
         </ul>
-    {% else %}
-        <p>No hay datos de habilidades disponibles.</p>
-    {% endif %}
+    </div>
+
+    <!-- Ofertas por fuente -->
+    <div class="section">
+        <h2>Ofertas por fuente</h2>
+        <ul>
+            {% for source in sources_count %}
+                <li>{{ source.source }}: {{ source.count }} ofertas</li>
+            {% endfor %}
+        </ul>
+    </div>
 
     <!-- Habilidades en Asturias -->
-    <h4>Habilidades en Asturias</h4>
-    {% if asturias_skills %}
+    <div class="section">
+        <h2>Habilidades más demandadas en Asturias</h2>
         <ul>
-        {% for skill in asturias_skills %}
-            <li>{{ skill.skills__name|capfirst }}: {{ skill.count }} ofertas</li>
-        {% endfor %}
+            {% for skill in asturias_skills %}
+                {% if skill.skills__name %}
+                    <li>{{ skill.skills__name|capitalize }}: {{ skill.count }} ofertas</li>
+                {% endif %}
+            {% empty %}
+                <li>No hay datos para Asturias.</li>
+            {% endfor %}
         </ul>
-    {% else %}
-        <p>No hay datos de habilidades en Asturias.</p>
-    {% endif %}
+    </div>
 
     <!-- Comparación entre plataformas -->
-    <h4>Comparación entre Plataformas</h4>
-    {% for source, skills in platform_comparison.items %}
-        <h5>{{ source }}</h5>
-        {% if skills %}
+    <div class="section">
+        <h2>Comparación entre plataformas</h2>
+        {% for source, skills in platform_comparison.items %}
+            <h3>{{ source }}</h3>
             <ul>
-            {% for skill in skills %}
-                <li>{{ skill.name|capfirst }}: {{ skill.count }} ofertas</li>
-            {% endfor %}
+                {% for skill in skills %}
+                    <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
+                {% empty %}
+                    <li>No hay datos para {{ source }}.</li>
+                {% endfor %}
             </ul>
-        {% else %}
-            <p>No hay datos para {{ source }}.</p>
-        {% endif %}
-    {% endfor %}
-
-    <!-- Recomendaciones y predicciones -->
-    {% if recommended_tasks %}
-        <h4>Tareas Recomendadas</h4>
-        <ul>
-        {% for task in recommended_tasks %}
-            <li>{{ task }}</li>
         {% endfor %}
-        </ul>
-    {% endif %}
+    </div>
 
-    {% if future_skills %}
-        <h4>Predicciones de Habilidades Futuras</h4>
+    <!-- Predicciones de habilidades futuras -->
+    <div class="section">
+        <h2>Habilidades con mayor demanda prevista (próximos 30 días)</h2>
         <ul>
-        {% for skill in future_skills %}
-            <li>{{ skill|capfirst }}</li>
-        {% endfor %}
+            {% for trend in future_skills %}
+                <li>{{ trend.skill }}: {{ trend.predicted_demand }} ofertas previstas</li>
+            {% empty %}
+                <li>No hay predicciones disponibles.</li>
+            {% endfor %}
         </ul>
-    {% endif %}
-</div>
+    </div>
 
-<!-- Incluir Chart.js y scripts para gráficos -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Gráfico de ofertas por fuente
-    const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
-    new Chart(sourcesCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ sources_labels|safe }},
-            datasets: [{
-                label: 'Ofertas por Fuente',
-                data: {{ sources_data|safe }},
-                backgroundColor: ['#007bff', '#28a745'],
-                borderColor: ['#0056b3', '#218838'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+    <!-- Recomendaciones de tareas -->
+    <div class="section">
+        <h2>Tareas recomendadas para ti</h2>
+        <ul>
+            {% for task in recommended_tasks %}
+                <li>{{ task.title }} (Prioridad: {{ task.priority|title }}) - Habilidades: {% for skill in task.skills.all %}{{ skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</li>
+            {% empty %}
+                <li>No hay tareas recomendadas.</li>
+            {% endfor %}
+        </ul>
+    </div>
 
-    // Gráfico de habilidades más demandadas
-    const skillsCtx = document.getElementById('skillsChart').getContext('2d');
-    new Chart(skillsCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ skills_labels|safe }},
-            datasets: [{
-                label: 'Habilidades Demandadas',
-                data: {{ skills_data|safe }},
-                backgroundColor: '#007bff',
-                borderColor: '#0056b3',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+    <!-- Total de ofertas -->
+    <div class="section">
+        <h2>Total de ofertas (último mes)</h2>
+        <p>{{ total_offers }} ofertas</p>
+    </div>
 
-    // Gráfico de habilidades en Asturias
-    {% if asturias_skills %}
-    const asturiasCtx = document.getElementById('asturiasChart').getContext('2d');
-    new Chart(asturiasCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ asturias_labels|safe }},
-            datasets: [{
-                label: 'Habilidades en Asturias',
-                data: {{ asturias_data|safe }},
-                backgroundColor: '#28a745',
-                borderColor: '#218838',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-    {% endif %}
-</script>
-{% endblock %}
+    <!-- Empresas con más ofertas -->
+    <div class="section">
+        <h2>Empresas con más ofertas</h2>
+        <ul>
+            {% for company in companies_count %}
+                <li>{{ company.company }}: {{ company.count }} ofertas</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Ofertas recientes -->
+    <div class="section">
+        <h2>Ofertas recientes</h2>
+        <ul>
+            {% for offer in recent_offers %}
+                <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }}) - <a href="{{ offer.url }}">Ver oferta</a></li>
+            {% empty %}
+                <li>No hay ofertas recientes.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="section">
+        <form method="post" action="{% url 'update_scraper' %}">
+            {% csrf_token %}
+            <input type="hidden" name="source" value="LinkedIn">
+            <button type="submit">Actualizar LinkedIn</button>
+        </form>
+        <form method="post" action="{% url 'update_scraper' %}">
+            {% csrf_token %}
+            <input type="hidden" name="source" value="Tecnoempleo">
+            <button type="submit">Actualizar Tecnoempleo</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,8 +1,8 @@
 # market_analysis/urls.py
 from django.urls import path
-from .views import dashboard, update_scraper
+from . import views
 
 urlpatterns = [
-    path('dashboard/', dashboard, name='dashboard'),
-    path('update/', update_scraper, name='update_scraper'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('update-scraper/', views.update_scraper, name='update_scraper'),
 ]

@@ -14,7 +14,7 @@ class JobOffer(models.Model):
     publication_date = models.DateField()
     salary = models.CharField(max_length=100, blank=True, null=True)
     url = models.URLField(max_length=500, unique=True, blank=True, null=True)
-    skills = models.ManyToManyField(Skill, blank=True)
+    skills = models.ManyToManyField(Skill, related_name='job_offers')
 
     class Meta:
         unique_together = ('title', 'company', 'source')

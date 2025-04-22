@@ -11,5 +11,5 @@ urlpatterns = [
     path('restricted/', restricted_view, name='restricted'),
     path('', include('projects.urls')),
     path('data/', include('data_integration.urls')),
-    path('data/', include('market_analysis.urls')),
+    path('market-analysis/', include('market_analysis.urls')),
 ]
