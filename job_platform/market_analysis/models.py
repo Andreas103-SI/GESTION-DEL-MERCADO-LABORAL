@@ -3,7 +3,11 @@ from django.db import models
 from django.contrib.postgres.fields import CICharField  # For PostgreSQL case-insensitive field
 
 class Skill(models.Model):
-    name = CICharField(max_length=100, unique=True)  # Changed to CICharField for case-insensitive uniqueness
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        db_collation='fr-CI-x-icu'
+    )
     def __str__(self): return self.name
 
 class JobOffer(models.Model):

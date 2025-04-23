@@ -1,37 +1,65 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard de Ofertas</title>
+{% extends "base.html" %}
+{% block extra_head %}
     <style>
-        .section { margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; }
-        h1, h2 { color: #333; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            background-color: #e6f0fa;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .pagination a {
+            margin: 0 5px;
+            color: #007bff;
+        }
+        canvas {
+            max-width: 600px;
+            margin: 20px auto;
+        }
     </style>
-</head>
-<body>
-    <h1>Dashboard de Ofertas</h1>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Dashboard de Análisis de Mercado</h1>
 
     <!-- Formulario de búsqueda para ofertas -->
     <div class="section">
         <h2>Filtrar Ofertas Recientes</h2>
-        <form method="get">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Buscar por título, empresa o ubicación">
-            <button type="submit">Buscar</button>
+        <form method="get" action="{% url 'dashboard' %}">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Buscar por título, empresa o ubicación">
+                <button class="btn btn-primary" type="submit">Buscar</button>
+            </div>
         </form>
     </div>
 
     <!-- Habilidades más demandadas -->
     <div class="section">
         <h2>Habilidades más demandadas (último mes)</h2>
+        <canvas id="skillsChart"></canvas>
         <ul>
             {% for skill in skills_demand %}
-                {% if skill.skills__name %}
-                    <li>{{ skill.skills__name|capitalize }}: {{ skill.count }} ofertas</li>
-                {% endif %}
+            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
             {% empty %}
-                <li>No hay datos de habilidades.</li>
+            <li>No hay datos de habilidades.</li>
             {% endfor %}
         </ul>
     </div>
@@ -41,7 +69,7 @@
         <h2>Ofertas por fuente</h2>
         <ul>
             {% for source in sources_count %}
-                <li>{{ source.source }}: {{ source.count }} ofertas</li>
+            <li>{{ source.source }}: {{ source.count }} ofertas</li>
             {% endfor %}
         </ul>
     </div>
@@ -51,11 +79,9 @@
         <h2>Habilidades más demandadas en Asturias</h2>
         <ul>
             {% for skill in asturias_skills %}
-                {% if skill.skills__name %}
-                    <li>{{ skill.skills__name|capitalize }}: {{ skill.count }} ofertas</li>
-                {% endif %}
+            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
             {% empty %}
-                <li>No hay datos para Asturias.</li>
+            <li>No hay datos para Asturias.</li>
             {% endfor %}
         </ul>
     </div>
@@ -64,14 +90,14 @@
     <div class="section">
         <h2>Comparación entre plataformas</h2>
         {% for source, skills in platform_comparison.items %}
-            <h3>{{ source }}</h3>
-            <ul>
-                {% for skill in skills %}
-                    <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
-                {% empty %}
-                    <li>No hay datos para {{ source }}.</li>
-                {% endfor %}
-            </ul>
+        <h3>{{ source }}</h3>
+        <ul>
+            {% for skill in skills %}
+            <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
+            {% empty %}
+            <li>No hay datos para {{ source }}.</li>
+            {% endfor %}
+        </ul>
         {% endfor %}
     </div>
 
@@ -80,9 +106,9 @@
         <h2>Habilidades con mayor demanda prevista (próximos 30 días)</h2>
         <ul>
             {% for trend in future_skills %}
-                <li>{{ trend.skill }}: {{ trend.predicted_demand }} ofertas previstas</li>
+            <li>{{ trend.skill }}: {{ trend.predicted_demand }} ofertas previstas</li>
             {% empty %}
-                <li>No hay predicciones disponibles.</li>
+            <li>No hay predicciones disponibles.</li>
             {% endfor %}
         </ul>
     </div>
@@ -90,11 +116,28 @@
     <!-- Recomendaciones de tareas -->
     <div class="section">
         <h2>Tareas recomendadas para ti</h2>
+        <form method="get" action="{% url 'dashboard' %}">
+            <div class="mb-3">
+                <label for="priority" class="form-label">Filtrar por prioridad:</label>
+                <select name="priority" id="priority" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas</option>
+                    <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Baja</option>
+                    <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Media</option>
+                    <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>Alta</option>
+                </select>
+            </div>
+            <input type="hidden" name="search" value="{{ search_query }}">
+            <input type="hidden" name="page" value="{{ recent_offers.number }}">
+        </form>
         <ul>
             {% for task in recommended_tasks %}
-                <li>{{ task.title }} (Prioridad: {{ task.priority|title }}) - Habilidades: {% for skill in task.skills.all %}{{ skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</li>
+            <li>{{ task.title }} (Prioridad: {{ task.priority|title }}) - Habilidades: 
+                {% for skill in task.skills.all %}
+                {{ skill.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </li>
             {% empty %}
-                <li>No hay tareas recomendadas.</li>
+            <li>No hay tareas recomendadas.</li>
             {% endfor %}
         </ul>
     </div>
@@ -110,7 +153,7 @@
         <h2>Empresas con más ofertas</h2>
         <ul>
             {% for company in companies_count %}
-                <li>{{ company.company }}: {{ company.count }} ofertas</li>
+            <li>{{ company.company }}: {{ company.count }} ofertas</li>
             {% endfor %}
         </ul>
     </div>
@@ -120,24 +163,64 @@
         <h2>Ofertas recientes</h2>
         <ul>
             {% for offer in recent_offers %}
-                <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }}) - <a href="{{ offer.url }}">Ver oferta</a></li>
+            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }}) - <a href="{{ offer.url }}">Ver oferta</a></li>
             {% empty %}
-                <li>No hay ofertas recientes.</li>
+            <li>No hay ofertas recientes.</li>
             {% endfor %}
         </ul>
+        <!-- Controles de paginación -->
+        <div class="pagination">
+            {% if recent_offers.has_previous %}
+            <a href="?page={{ recent_offers.previous_page_number }}&search={{ search_query }}&priority={{ priority_filter }}">Anterior</a>
+            {% endif %}
+            <span>Página {{ recent_offers.number }} de {{ recent_offers.paginator.num_pages }}</span>
+            {% if recent_offers.has_next %}
+            <a href="?page={{ recent_offers.next_page_number }}&search={{ search_query }}&priority={{ priority_filter }}">Siguiente</a>
+            {% endif %}
+        </div>
     </div>
 
+    <!-- Botones para actualizar scrapers -->
     <div class="section">
         <form method="post" action="{% url 'update_scraper' %}">
             {% csrf_token %}
             <input type="hidden" name="source" value="LinkedIn">
-            <button type="submit">Actualizar LinkedIn</button>
+            <button type="submit" class="btn btn-primary">Actualizar LinkedIn</button>
         </form>
         <form method="post" action="{% url 'update_scraper' %}">
             {% csrf_token %}
             <input type="hidden" name="source" value="Tecnoempleo">
-            <button type="submit">Actualizar Tecnoempleo</button>
+            <button type="submit" class="btn btn-primary">Actualizar Tecnoempleo</button>
         </form>
     </div>
-</body>
-</html>
+
+    <script>
+        const ctx = document.getElementById('skillsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ skills_labels|safe }},
+                datasets: [{
+                    label: 'Habilidades más demandadas',
+                    data: {{ skills_data|safe }},
+                    backgroundColor: '#007bff',
+                    borderColor: '#0056b3',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    </script>
+</div>
+{% endblock %}

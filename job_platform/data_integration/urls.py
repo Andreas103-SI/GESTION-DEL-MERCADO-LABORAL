@@ -1,11 +1,10 @@
 # data_integration/urls.py
 from django.urls import path
-from .views import scrape_index
-from .scrapers.linkedin import scrape_linkedin
-from .scrapers.tecnoempleo import scrape_tecnoempleo
+from . import views
 
 urlpatterns = [
-    path('', scrape_index, name='scrape_index'),
-    path('linkedin/', scrape_linkedin, name='scrape_linkedin'),
-    path('tecnoempleo/', scrape_tecnoempleo, name='scrape_tecnoempleo'),
+    path('', views.scrape_index, name='scrape_index'),
+    path('linkedin/', views.scrape_linkedin_view, name='scrape_linkedin'),
+    path('tecnoempleo/', views.scrape_tecnoempleo_view, name='scrape_tecnoempleo'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
 ]
