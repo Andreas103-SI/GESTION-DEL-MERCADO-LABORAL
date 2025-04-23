@@ -29,10 +29,46 @@
 <div class="container mt-4">
     <h1>Dashboard de Resultados de Scrapers</h1>
 
+    <!-- Mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
     <!-- Gráfico de ofertas por fuente -->
     <div class="section">
         <h2>Ofertas por fuente (último mes)</h2>
-        <canvas id="sourcesChart"></canvas>
+        {% if sources_count %}
+            <canvas id="sourcesChart"></canvas>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    try {
+                        const ctx = document.getElementById('sourcesChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: {{ sources_labels|safe }},
+                                datasets: [{
+                                    label: 'Ofertas por fuente',
+                                    data: {{ sources_data|safe }},
+                                    backgroundColor: ['#007bff', '#0056b3'],
+                                    borderColor: '#ffffff',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                plugins: { legend: { display: true } }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error rendering sources chart:', e);
+                    }
+                });
+            </script>
+        {% else %}
+            <p>No hay datos suficientes para mostrar el gráfico. Por favor, ejecuta los scrapers.</p>
+        {% endif %}
         <ul>
             {% for source in sources_count %}
             <li>{{ source.source }}: {{ source.count }} ofertas</li>
@@ -46,34 +82,5 @@
     <div class="section">
         <a href="{% url 'scrape_index' %}" class="btn btn-primary">Volver a Scrapers</a>
     </div>
-
-    <script>
-        const ctx = document.getElementById('sourcesChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ sources_labels|safe }},
-                datasets: [{
-                    label: 'Ofertas por fuente',
-                    data: {{ sources_data|safe }},
-                    backgroundColor: '#007bff',
-                    borderColor: '#0056b3',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            }
-        });
-    </script>
 </div>
 {% endblock %}

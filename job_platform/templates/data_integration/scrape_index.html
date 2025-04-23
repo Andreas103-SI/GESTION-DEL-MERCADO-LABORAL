@@ -2,25 +2,44 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Scrapers de Empleo</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     <div class="row mt-4">
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">LinkedIn</h5>
-                    <p class="card-text">Extrae ofertas de empleo de LinkedIn en Asturias.</p>
-                    <a href="{% url 'scrape_linkedin' %}" class="btn btn-primary">Ejecutar Scraper de LinkedIn</a>
+            <div class="card border-primary">
+                <div class="card-body bg-light">
+                    <h5 class="card-title text-primary">LinkedIn</h5>
+                    <p class="card-text">Extrae ofertas de empleo de LinkedIn en España.</p>
+                    <form method="post" action="{% url 'scrape_linkedin' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Ejecutar Scraper de LinkedIn</button>
+                    </form>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Tecnoempleo</h5>
-                    <p class="card-text">Extrae ofertas de empleo de Tecnoempleo en Asturias.</p>
-                    <a href="{% url 'scrape_tecnoempleo' %}" class="btn btn-primary">Ejecutar Scraper de Tecnoempleo</a>
+            <div class="card border-primary">
+                <div class="card-body bg-light">
+                    <h5 class="card-title text-primary">Tecnoempleo</h5>
+                    <p class="card-text">Extrae ofertas de empleo de Tecnoempleo en España.</p>
+                    <form method="post" action="{% url 'scrape_tecnoempleo' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Ejecutar Scraper de Tecnoempleo</button>
+                    </form>
                 </div>
             </div>
         </div>
+    </div>
+    <div class="mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">Ver Dashboard</a>
+        <a href="{% url 'scrape_results' %}" class="btn btn-outline-primary">Ver Resultados</a>
+        <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-primary">Análisis de Mercado</a>
     </div>
 </div>
 {% endblock %}

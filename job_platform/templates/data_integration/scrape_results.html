@@ -4,28 +4,42 @@
     <h2>Resultados del Scraping</h2>
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-    <p>Se han extraído {{ num_offers }} ofertas.</p>
-    {% if offers %}
-        {% for offer in offers %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">{{ offer.title }} - {{ offer.company }}</h5>
-                    <p class="card-text">{{ offer.location }} - Publicado: {{ offer.publication_date|date:"d/m/Y" }}</p>
-                    <p class="card-text">Habilidades: 
-                        {% if offer.required_skills %}
-                            {{ offer.required_skills|join:", " }}
-                        {% else %}
-                            No especificadas
-                        {% endif %}
-                    </p>
-                </div>
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
-    {% else %}
-        <p>No se encontraron ofertas.</p>
     {% endif %}
+    <p class="text-primary">Se han extraído {{ num_offers }} ofertas.</p>
+    {% if offers %}
+        <div class="row">
+            {% for offer in offers %}
+                <div class="col-md-6 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-body bg-light">
+                            <h5 class="card-title text-primary">{{ offer.title }} - {{ offer.company }}</h5>
+                            <p class="card-text">
+                                <strong>Ubicación:</strong> {{ offer.location|default:"No especificada" }}<br>
+                                <strong>Publicado:</strong> {{ offer.publication_date|date:"d/m/Y" }}<br>
+                                <strong>Habilidades:</strong> 
+                                {% for skill in offer.skills.all %}
+                                    {{ skill.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    No especificadas
+                                {% endfor %}
+                            </p>
+                            <a href="{{ offer.url }}" class="btn btn-primary" target="_blank">Ver oferta</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No se encontraron ofertas.</p>
+    {% endif %}
+    <div class="mt-3">
+        <a href="{% url 'scrape_index' %}" class="btn btn-primary">Volver a Scrapers</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Ver Dashboard</a>
+    </div>
 </div>
 {% endblock %}

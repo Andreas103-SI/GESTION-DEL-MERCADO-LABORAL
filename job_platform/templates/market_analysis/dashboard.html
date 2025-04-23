@@ -21,14 +21,22 @@
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
+            color: #ffffff;
         }
         .btn-primary:hover {
             background-color: #0056b3;
             border-color: #0056b3;
+            color: #ffffff;
+        }
+        .pagination {
+            display: inline-flex;
+            gap: 10px;
+            margin-top: 10px;
         }
         .pagination a {
-            margin: 0 5px;
-            color: #007bff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-decoration: none;
         }
         canvas {
             max-width: 600px;
@@ -40,21 +48,63 @@
 <div class="container mt-4">
     <h1>Dashboard de Análisis de Mercado</h1>
 
-    <!-- Formulario de búsqueda para ofertas -->
-    <div class="section">
-        <h2>Filtrar Ofertas Recientes</h2>
-        <form method="get" action="{% url 'dashboard' %}">
-            <div class="input-group mb-3">
-                <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Buscar por título, empresa o ubicación">
-                <button class="btn btn-primary" type="submit">Buscar</button>
+    <!-- Mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Actualizar scrapers -->
+    <div class="section">
+        <h2>Actualizar Datos</h2>
+        <form method="post" action="{% url 'market_analysis:update_scraper' %}">
+            {% csrf_token %}
+            <select name="source" class="form-select mb-2">
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Tecnoempleo">Tecnoempleo</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Actualizar Scraper</button>
         </form>
     </div>
 
     <!-- Habilidades más demandadas -->
     <div class="section">
         <h2>Habilidades más demandadas (último mes)</h2>
-        <canvas id="skillsChart"></canvas>
+        {% if skills_demand %}
+            <canvas id="skillsChart"></canvas>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    try {
+                        const ctx = document.getElementById('skillsChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: {{ skills_labels|safe }},
+                                datasets: [{
+                                    label: 'Habilidades más demandadas',
+                                    data: {{ skills_data|safe }},
+                                    backgroundColor: '#007bff',
+                                    borderColor: '#0056b3',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: { y: { beginAtZero: true } },
+                                plugins: { legend: { display: true } }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error rendering skills chart:', e);
+                    }
+                });
+            </script>
+        {% else %}
+            <p>No hay datos suficientes para mostrar el gráfico.</p>
+        {% endif %}
         <ul>
             {% for skill in skills_demand %}
             <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
@@ -67,21 +117,41 @@
     <!-- Ofertas por fuente -->
     <div class="section">
         <h2>Ofertas por fuente</h2>
+        {% if sources_count %}
+            <canvas id="sourcesChart"></canvas>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    try {
+                        const ctx = document.getElementById('sourcesChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: {{ sources_labels|safe }},
+                                datasets: [{
+                                    label: 'Ofertas por fuente',
+                                    data: {{ sources_data|safe }},
+                                    backgroundColor: ['#007bff', '#0056b3'],
+                                    borderColor: '#ffffff',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                plugins: { legend: { display: true } }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error rendering sources chart:', e);
+                    }
+                });
+            </script>
+        {% else %}
+            <p>No hay datos suficientes para mostrar el gráfico.</p>
+        {% endif %}
         <ul>
             {% for source in sources_count %}
             <li>{{ source.source }}: {{ source.count }} ofertas</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Habilidades en Asturias -->
-    <div class="section">
-        <h2>Habilidades más demandadas en Asturias</h2>
-        <ul>
-            {% for skill in asturias_skills %}
-            <li>{{ skill.skills__name }}: {{ skill.count }} ofertas</li>
             {% empty %}
-            <li>No hay datos para Asturias.</li>
+            <li>No hay datos disponibles.</li>
             {% endfor %}
         </ul>
     </div>
@@ -89,63 +159,16 @@
     <!-- Comparación entre plataformas -->
     <div class="section">
         <h2>Comparación entre plataformas</h2>
-        {% for source, skills in platform_comparison.items %}
-        <h3>{{ source }}</h3>
-        <ul>
-            {% for skill in skills %}
-            <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
-            {% empty %}
-            <li>No hay datos para {{ source }}.</li>
-            {% endfor %}
-        </ul>
-        {% endfor %}
-    </div>
-
-    <!-- Predicciones de habilidades futuras -->
-    <div class="section">
-        <h2>Habilidades con mayor demanda prevista (próximos 30 días)</h2>
-        <ul>
-            {% for trend in future_skills %}
-            <li>{{ trend.skill }}: {{ trend.predicted_demand }} ofertas previstas</li>
-            {% empty %}
-            <li>No hay predicciones disponibles.</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Recomendaciones de tareas -->
-    <div class="section">
-        <h2>Tareas recomendadas para ti</h2>
-        <form method="get" action="{% url 'dashboard' %}">
-            <div class="mb-3">
-                <label for="priority" class="form-label">Filtrar por prioridad:</label>
-                <select name="priority" id="priority" class="form-select" onchange="this.form.submit()">
-                    <option value="">Todas</option>
-                    <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Baja</option>
-                    <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Media</option>
-                    <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>Alta</option>
-                </select>
-            </div>
-            <input type="hidden" name="search" value="{{ search_query }}">
-            <input type="hidden" name="page" value="{{ recent_offers.number }}">
-        </form>
-        <ul>
-            {% for task in recommended_tasks %}
-            <li>{{ task.title }} (Prioridad: {{ task.priority|title }}) - Habilidades: 
-                {% for skill in task.skills.all %}
-                {{ skill.name }}{% if not forloop.last %}, {% endif %}
+        {% for platform, skills in platform_comparison.items %}
+            <h3>{{ platform }}</h3>
+            <ul>
+                {% for skill in skills %}
+                <li>{{ skill.name }}: {{ skill.count }} ofertas</li>
+                {% empty %}
+                <li>No hay datos disponibles.</li>
                 {% endfor %}
-            </li>
-            {% empty %}
-            <li>No hay tareas recomendadas.</li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Total de ofertas -->
-    <div class="section">
-        <h2>Total de ofertas (último mes)</h2>
-        <p>{{ total_offers }} ofertas</p>
+            </ul>
+        {% endfor %}
     </div>
 
     <!-- Empresas con más ofertas -->
@@ -154,6 +177,42 @@
         <ul>
             {% for company in companies_count %}
             <li>{{ company.company }}: {{ company.count }} ofertas</li>
+            {% empty %}
+            <li>No hay datos disponibles.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Habilidades futuras -->
+    <div class="section">
+        <h2>Habilidades con mayor demanda prevista (próximos 30 días)</h2>
+        <ul>
+            {% for skill in future_skills %}
+            <li>{{ skill.name }}: {{ skill.count }} ofertas previstas</li>
+            {% empty %}
+            <li>No hay predicciones disponibles.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Tareas recomendadas -->
+    <div class="section">
+        <h2>Tareas recomendadas para ti</h2>
+        <form method="get">
+            <label for="priority_filter">Filtrar por prioridad:</label>
+            <select name="priority" id="priority_filter" class="form-select mb-2">
+                <option value="">Todas</option>
+                <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>Alta</option>
+                <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Media</option>
+                <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Baja</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        <ul>
+            {% for task in recommended_tasks %}
+            <li>{{ task.title }} (Prioridad: {{ task.priority }})</li>
+            {% empty %}
+            <li>No hay tareas recomendadas.</li>
             {% endfor %}
         </ul>
     </div>
@@ -161,66 +220,28 @@
     <!-- Ofertas recientes -->
     <div class="section">
         <h2>Ofertas recientes</h2>
+        <form method="get">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Buscar ofertas..." class="form-control mb-2">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
         <ul>
             {% for offer in recent_offers %}
-            <li>{{ offer.title }} - {{ offer.company }} ({{ offer.location }}) - <a href="{{ offer.url }}">Ver oferta</a></li>
+            <li>
+                {{ offer.title }} - {{ offer.company }} ({{ offer.location }}) -
+                <a href="{{ offer.url }}" target="_blank">Ver oferta</a>
+            </li>
             {% empty %}
             <li>No hay ofertas recientes.</li>
             {% endfor %}
         </ul>
-        <!-- Controles de paginación -->
         <div class="pagination">
             {% if recent_offers.has_previous %}
-            <a href="?page={{ recent_offers.previous_page_number }}&search={{ search_query }}&priority={{ priority_filter }}">Anterior</a>
+                <a href="?page={{ recent_offers.previous_page_number }}&search={{ search_query }}&priority={{ priority_filter }}" class="btn btn-primary">Anterior</a>
             {% endif %}
-            <span>Página {{ recent_offers.number }} de {{ recent_offers.paginator.num_pages }}</span>
             {% if recent_offers.has_next %}
-            <a href="?page={{ recent_offers.next_page_number }}&search={{ search_query }}&priority={{ priority_filter }}">Siguiente</a>
+                <a href="?page={{ recent_offers.next_page_number }}&search={{ search_query }}&priority={{ priority_filter }}" class="btn btn-primary">Siguiente</a>
             {% endif %}
         </div>
     </div>
-
-    <!-- Botones para actualizar scrapers -->
-    <div class="section">
-        <form method="post" action="{% url 'update_scraper' %}">
-            {% csrf_token %}
-            <input type="hidden" name="source" value="LinkedIn">
-            <button type="submit" class="btn btn-primary">Actualizar LinkedIn</button>
-        </form>
-        <form method="post" action="{% url 'update_scraper' %}">
-            {% csrf_token %}
-            <input type="hidden" name="source" value="Tecnoempleo">
-            <button type="submit" class="btn btn-primary">Actualizar Tecnoempleo</button>
-        </form>
-    </div>
-
-    <script>
-        const ctx = document.getElementById('skillsChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ skills_labels|safe }},
-                datasets: [{
-                    label: 'Habilidades más demandadas',
-                    data: {{ skills_data|safe }},
-                    backgroundColor: '#007bff',
-                    borderColor: '#0056b3',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            }
-        });
-    </script>
 </div>
 {% endblock %}
