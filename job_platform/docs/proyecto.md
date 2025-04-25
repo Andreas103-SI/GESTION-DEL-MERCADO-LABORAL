@@ -30,7 +30,7 @@
       - Tecnoempleo: Completo (30 ofertas, título, empresa, ubicación, fecha, habilidades).
       - InfoJobs: Parcial (20-30 ofertas, título, empresa, ubicación, fecha; habilidades en progreso).
       - LinkedIn: En curso (0 ofertas, autenticación manual, selectores obsoletos).
-    - Template: `data_integration/templates/data_integration/scrape_results.html` (título, empresa, ubicación, fecha, habilidades, “Se han extraído Z ofertas”, rango de fechas).
+    - Template: `data_integration/templates/data_integration/scrape_results.html` (título, empresa, ubicación, fecha, habilidades, "Se han extraído Z ofertas", rango de fechas).
     - Debug: `tecnoempleo_debug.html`, `infojobs_debug.html`, `linkedin_debug.html`.
   - **Inteligencia Artificial** (`ai_module/`, planificado):
     - Recomendaciones: Asignar tareas según habilidades con scikit-learn.
@@ -84,7 +84,7 @@ El proyecto se divide en 10 fases iterativas:
   - Extracción pública de https://www.tecnoempleo.com/ofertas-trabajo/?keyword=desarrollador&provincia=33.
   - Datos: Título, empresa, ubicación, fecha, habilidades.
   - Guardado en `JobOffer`, `Skill` con `get_or_create`.
-  - Resultados: 30 ofertas, fechas 11/04/2025 a 12/04/2025, mensaje “Se han extraído 30 ofertas”.
+  - Resultados: 30 ofertas, fechas 11/04/2025 a 12/04/2025, mensaje "Se han extraído 30 ofertas".
 
 - **Fase 5: Scraper de InfoJobs**:
   - Extracción pública de https://www.infojobs.net/ofertas-trabajo?keywords=desarrollador&province=asturias.
@@ -143,3 +143,64 @@ El proyecto se divide en 10 fases iterativas:
 - **Dashboard**: Muestra datos de Tecnoempleo, parcial para InfoJobs.
 - **IA/Escritorio**: Planificados.
 - **Pruebas**: Tests planificados para las tres plataformas.
+
+## Configuración de Variables de Entorno
+
+Para mejorar la seguridad de tu proyecto Django, es recomendable utilizar un archivo `.env` para almacenar variables sensibles como las credenciales de la base de datos. A continuación se detallan los pasos para configurar esto:
+
+### Instalación de python-dotenv
+
+1. Asegúrate de tener `python-dotenv` instalado en tu entorno de desarrollo. Puedes instalarlo usando pip:
+   ```bash
+   pip install python-dotenv
+   ```
+
+### Creación del archivo .env
+
+2. Crea un archivo llamado `.env` en la raíz de tu proyecto con el siguiente contenido:
+   ```
+   DB_NAME=nombre_real_de_tu_base_de_datos
+   DB_USER=usuario_real
+   DB_PASSWORD=contraseña_real
+   DB_HOST=localhost
+   DB_PORT=5432
+   ```
+
+### Modificación de settings.py
+
+3. Asegúrate de que tu archivo `settings.py` esté configurado para cargar las variables de entorno desde el archivo `.env`:
+   ```python
+   import os
+   from dotenv import load_dotenv
+
+   # Cargar las variables de entorno desde el archivo .env
+   load_dotenv()
+
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.postgresql',
+           'NAME': os.getenv('DB_NAME'),
+           'USER': os.getenv('DB_USER'),
+           'PASSWORD': os.getenv('DB_PASSWORD'),
+           'HOST': os.getenv('DB_HOST'),
+           'PORT': os.getenv('DB_PORT'),
+       }
+   }
+   ```
+
+### Asegúrate de que el archivo .env no se suba al repositorio
+
+4. Añade el archivo `.env` a tu archivo `.gitignore` para evitar que se suba a tu repositorio:
+   ```
+   # .gitignore
+   .env
+   ```
+
+### Verificación
+
+5. Ejecuta el servidor de desarrollo de Django para verificar que todo funcione correctamente:
+   ```bash
+   python manage.py runserver
+   ```
+
+Siguiendo estos pasos, podrás mantener tus variables sensibles seguras y fuera del código fuente.
