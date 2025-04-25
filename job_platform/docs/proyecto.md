@@ -204,3 +204,7 @@ Para mejorar la seguridad de tu proyecto Django, es recomendable utilizar un arc
    ```
 
 Siguiendo estos pasos, podrás mantener tus variables sensibles seguras y fuera del código fuente.
+Captura de pantalla 2025-04-25 144111.png
+Captura de pantalla 2025-04-25 144152.png
+Captura de pantalla 2025-04-25 144305.png
+Captura de pantalla 2025-03-31 123955.png

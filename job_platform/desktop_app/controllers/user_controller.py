@@ -12,6 +12,7 @@ class UserController:
 
     def set_view(self, view):
         self.view = view
+        self.load_users()
 
     def load_users(self):
         for item in self.view.user_tree.get_children():

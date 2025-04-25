@@ -53,4 +53,4 @@ class TaskView:
         self.task_tree.pack(fill="both", expand=True, padx=5, pady=5)
         self.task_tree.bind("<<TreeviewSelect>>", self.controller.on_task_select)
 
-        self.controller.load_tasks()
+        #self.controller.load_tasks()

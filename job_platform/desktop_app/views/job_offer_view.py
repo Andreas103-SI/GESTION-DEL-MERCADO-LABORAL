@@ -50,19 +50,14 @@ class JobOfferView:
         ttk.Button(button_frame, text="Actualizar", command=self.update_job_offer).pack(side="left", padx=5)
         ttk.Button(button_frame, text="Eliminar", command=self.delete_job_offer).pack(side="left", padx=5)
 
-        # Llamar al controlador para cargar las ofertas de empleo
-        self.controller.load_job_offers()
-
     def on_tree_select(self, event):
         """Rellenar los campos de entrada cuando se selecciona una oferta en el Treeview."""
         selected_item = self.job_tree.selection()
         if selected_item:
             values = self.job_tree.item(selected_item, "values")
-            # Limpiar los campos de entrada
             self.title_entry.delete(0, tk.END)
             self.company_entry.delete(0, tk.END)
             self.location_entry.delete(0, tk.END)
-            # Rellenar los campos con los valores seleccionados
             self.title_entry.insert(0, values[1])  # Título
             self.company_entry.insert(0, values[2])  # Empresa
             self.location_entry.insert(0, values[3])  # Ubicación
@@ -79,11 +74,9 @@ class JobOfferView:
 
         try:
             self.controller.add_job_offer(title, company, location)
-            # Limpiar los campos después de añadir
             self.title_entry.delete(0, tk.END)
             self.company_entry.delete(0, tk.END)
             self.location_entry.delete(0, tk.END)
-            # Recargar las ofertas
             self.controller.load_job_offers()
             messagebox.showinfo("Éxito", "Oferta de empleo añadida correctamente.")
         except Exception as e:
@@ -96,7 +89,7 @@ class JobOfferView:
             messagebox.showerror("Error", "Selecciona una oferta para actualizar.")
             return
 
-        offer_id = self.job_tree.item(selected_item, "values")[0]  # Obtener el ID de la oferta seleccionada
+        offer_id = self.job_tree.item(selected_item, "values")[0]
         title = self.title_entry.get()
         company = self.company_entry.get()
         location = self.location_entry.get()
@@ -107,7 +100,6 @@ class JobOfferView:
 
         try:
             self.controller.update_job_offer(offer_id, title, company, location)
-            # Recargar las ofertas
             self.controller.load_job_offers()
             messagebox.showinfo("Éxito", "Oferta de empleo actualizada correctamente.")
         except Exception as e:
@@ -120,12 +112,11 @@ class JobOfferView:
             messagebox.showerror("Error", "Selecciona una oferta para eliminar.")
             return
 
-        offer_id = self.job_tree.item(selected_item, "values")[0]  # Obtener el ID de la oferta seleccionada
+        offer_id = self.job_tree.item(selected_item, "values")[0]
 
         if messagebox.askyesno("Confirmar", "¿Estás seguro de que quieres eliminar esta oferta?"):
             try:
                 self.controller.delete_job_offer(offer_id)
-                # Recargar las ofertas
                 self.controller.load_job_offers()
                 messagebox.showinfo("Éxito", "Oferta de empleo eliminada correctamente.")
             except Exception as e:

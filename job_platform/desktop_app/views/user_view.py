@@ -42,4 +42,4 @@ class UserView:
         self.user_tree.pack(fill="both", expand=True, padx=5, pady=5)
         self.user_tree.bind("<<TreeviewSelect>>", self.controller.on_user_select)
 
-        self.controller.load_users()
+      #  self.controller.load_users()

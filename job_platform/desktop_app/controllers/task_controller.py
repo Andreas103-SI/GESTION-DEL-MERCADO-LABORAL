@@ -13,6 +13,7 @@ class TaskController:
 
     def set_view(self, view):
         self.view = view
+        self.load_tasks()
 
     def load_tasks(self):
         for item in self.view.task_tree.get_children():
