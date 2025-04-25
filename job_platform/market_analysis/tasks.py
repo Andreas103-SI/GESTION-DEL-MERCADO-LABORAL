@@ -6,6 +6,11 @@ import time
 from datetime import date
 from .models import JobOffer, Skill
 
+# Este módulo define tareas para el scraping de ofertas de trabajo desde LinkedIn y Tecnoempleo.
+# Utiliza Selenium para automatizar la extracción de datos de las páginas web.
+
+# Función para ejecutar el scraper de LinkedIn.
+# Extrae las primeras 10 ofertas de trabajo y las guarda en la base de datos.
 def run_linkedin_scraper():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -46,6 +51,8 @@ def run_linkedin_scraper():
     finally:
         driver.quit()
 
+# Función para ejecutar el scraper de Tecnoempleo.
+# Extrae las primeras 10 ofertas de trabajo y las guarda en la base de datos.
 def scrape_tecnoempleo():
     chrome_options = Options()
     chrome_options.add_argument("--headless")

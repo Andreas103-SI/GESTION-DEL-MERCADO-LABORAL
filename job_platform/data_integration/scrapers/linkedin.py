@@ -1,4 +1,7 @@
 # data_integration/scrapers/linkedin.py
+# Este script realiza scraping de ofertas de trabajo desde LinkedIn.
+# Extrae información como título, empresa y ubicación de las ofertas.
+# El proceso puede demorar varios minutos dependiendo del número de ofertas a extraer y las restricciones de LinkedIn.
 import re
 import time
 import logging
@@ -23,6 +26,9 @@ from .base_scraper import BaseScraper
 
 logger = logging.getLogger(__name__)
 
+# Función para iniciar el scraping de LinkedIn desde una vista.
+# Crea una instancia del scraper y ejecuta el proceso de extracción de ofertas.
+# Maneja excepciones y muestra mensajes de éxito o error en la interfaz de usuario.
 @has_role_decorator(['admin', 'collaborator'])
 def scrape_linkedin(request):
     scraper = LinkedInScraper()
@@ -42,8 +48,15 @@ def scrape_linkedin(request):
         messages.error(request, f"Error al scrapear LinkedIn: {e}")
         return render(request, 'data_integration/scrape_results.html', {'offers': []})
 
+# Clase que define el scraper de LinkedIn.
+# Hereda de BaseScraper y maneja la lógica de extracción de datos.
+# Utiliza Selenium para interactuar con la página web de LinkedIn de manera automatizada.
 class LinkedInScraper(BaseScraper):
     def __init__(self):
+        # Inicializa el scraper con la URL base de LinkedIn y configura el navegador.
+        # Muestra advertencias sobre el uso del scraper debido a posibles violaciones de los Términos de Servicio.
+        # Configura el navegador en modo headless para evitar mostrar la interfaz gráfica.
+        # Utiliza ChromeDriverManager para gestionar la instalación del controlador de Chrome.
         super().__init__("LinkedIn", "https://www.linkedin.com")
         logger.warning("\n" + "*" * 70)
         logger.warning("ADVERTENCIA: Scraping de LinkedIn en curso.")
@@ -64,6 +77,10 @@ class LinkedInScraper(BaseScraper):
 
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
+    # Método para iniciar sesión en LinkedIn.
+    # Utiliza las credenciales almacenadas en variables de entorno para acceder a la cuenta.
+    # Verifica si el inicio de sesión fue exitoso comprobando la URL actual.
+    # Captura y maneja errores durante el proceso de inicio de sesión.
     def login(self, username, password):
         logger.info("Iniciando sesión en LinkedIn...")
         self.driver.get("https://www.linkedin.com/login")
@@ -89,6 +106,10 @@ class LinkedInScraper(BaseScraper):
             logger.error(f"Error durante el inicio de sesión: {e}")
             raise
 
+    # Método para buscar ofertas de trabajo en LinkedIn.
+    # Realiza una búsqueda basada en la consulta y ubicación proporcionadas, y maneja posibles CAPTCHA.
+    # Implementa un sistema de reintentos para manejar CAPTCHA y otros problemas de carga de página.
+    # Utiliza BeautifulSoup para analizar el HTML de la página y extraer URLs de ofertas de trabajo.
     def fetch_offers(self, query="software developer", location="Spain", max_offers=10):
         if not query or not query.strip():
             logger.error("Query vacía o inválida proporcionada")
@@ -160,6 +181,10 @@ class LinkedInScraper(BaseScraper):
         logger.info(f"Total URLs recolectadas: {len(offer_urls)}")
         return offer_urls[:max_offers]
 
+    # Método para analizar los detalles de una oferta de trabajo específica.
+    # Extrae información como título, empresa, ubicación, descripción, habilidades, fecha de publicación y salario.
+    # Normaliza el texto extraído para asegurar consistencia en los datos.
+    # Verifica la presencia de datos esenciales antes de guardar la oferta en la base de datos.
     def parse_offer_detail(self, url):
         logger.info(f"Parseando detalle: {url}")
         try:
@@ -314,6 +339,9 @@ class LinkedInScraper(BaseScraper):
             logger.error(f"Error al parsear detalle: {e}")
             return None
 
+    # Método principal para ejecutar el proceso de scraping.
+    # Inicia sesión, busca ofertas, analiza los detalles y guarda los datos extraídos.
+    # Maneja excepciones críticas y asegura el cierre adecuado del navegador.
     def run(self, query="software developer", location="Spain", max_offers=10):
         logger.info(f"Iniciando scraping de LinkedIn: query='{query}', location='{location}', max_offers={max_offers}")
         try:

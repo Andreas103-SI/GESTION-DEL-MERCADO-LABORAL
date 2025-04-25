@@ -1,3 +1,6 @@
+# Este módulo contiene pruebas para los scrapers de Tecnoempleo y LinkedIn.
+# Verifica la correcta extracción y procesamiento de datos como fechas, salarios y ofertas de trabajo.
+
 from django.test import TestCase
 from market_analysis.models import JobOffer, Skill
 from bs4 import BeautifulSoup

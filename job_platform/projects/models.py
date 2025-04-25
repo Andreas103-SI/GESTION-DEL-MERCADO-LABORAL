@@ -2,6 +2,11 @@
 from django.db import models
 from django.conf import settings
 
+# Este módulo define los modelos de datos para la gestión de proyectos.
+# Incluye modelos para proyectos, tareas y habilidades asociadas.
+
+# Modelo que representa un proyecto.
+# Almacena información sobre el nombre, descripción, fechas y gerente del proyecto.
 class Project(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
@@ -12,6 +17,8 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+# Modelo que representa una tarea dentro de un proyecto.
+# Almacena detalles como título, descripción, estado, prioridad, fecha límite y colaboradores.
 class Task(models.Model):
     STATES = (
         ('pending', 'Pendiente'),
@@ -35,6 +42,8 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
+# Modelo que representa una habilidad requerida para tareas.
+# Almacena el nombre de la habilidad de manera única.
 class Skill(models.Model):
     name = models.CharField(max_length=50, unique=True)
 

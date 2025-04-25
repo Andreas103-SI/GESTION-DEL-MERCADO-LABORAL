@@ -1,6 +1,10 @@
-# market_analysis/models.py
-from django.db import models
-from django.contrib.postgres.fields import CICharField  # For PostgreSQL case-insensitive field
+# Este módulo define los modelos de datos para el análisis del mercado laboral.
+# Incluye modelos para habilidades, ofertas de trabajo y datos de mercado.
+
+# Modelo que representa una habilidad específica.
+# Almacena el nombre de la habilidad de manera única y sensible a mayúsculas/minúsculas.
+from job_platform.ai_module import models
+
 
 class Skill(models.Model):
     name = models.CharField(
@@ -10,6 +14,9 @@ class Skill(models.Model):
     )
     def __str__(self): return self.name
 
+# Modelo que representa una oferta de trabajo.
+# Almacena detalles como título, empresa, ubicación, fuente, fecha de publicación, salario y URL.
+# Relaciona las ofertas con las habilidades requeridas.
 class JobOffer(models.Model):
     title = models.CharField(max_length=255)
     company = models.CharField(max_length=255)
@@ -26,6 +33,8 @@ class JobOffer(models.Model):
     def __str__(self):
         return f"{self.title} - {self.company} ({self.source})"
 
+# Modelo que representa datos de mercado para una habilidad en una fecha específica.
+# Almacena la cantidad de demanda de la habilidad y la fuente de los datos.
 class MarketData(models.Model):
     date = models.DateField()
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)

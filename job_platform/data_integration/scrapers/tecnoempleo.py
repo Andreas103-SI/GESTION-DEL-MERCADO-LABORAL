@@ -19,11 +19,6 @@ import random
 import requests
 from dotenv import load_dotenv
 
-
-
-
-
-# Scraper de Tecnoempleo para la Fase 5:
 # - Extrae 30 ofertas con título, empresa, ubicación, fecha y habilidades.
 # - Fechas correctas (11/04/2025 a 12/04/2025), sin fallback.
 # - Limpia salario (p.ej., '27.000€ - 33.000€ b/a') y texto ('Nueva', 'Actualizada') con regex.
@@ -32,26 +27,33 @@ from dotenv import load_dotenv
 # - Usa tecnoempleo_debug.html para depuración.
 @has_role_decorator('admin')
 def scrape_tecnoempleo(request):
+    # URL de la página de ofertas de trabajo en Tecnoempleo
     url = "https://www.tecnoempleo.com/ofertas-trabajo/?keyword=desarrollador&provincia=33"
+    # Encabezados para la solicitud HTTP
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
     try:
+        # Realizar la solicitud HTTP a la URL
         response = requests.get(url, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
+        # Manejar errores de conexión
         messages.error(request, f"Error al conectar con Tecnoempleo: {e}")
         return render(request, 'data_integration/scrape_results.html', {'offers': []})
 
-    # Guardar HTML para depuración
+    # Guardar el HTML de la página para depuración
     debug_path = os.path.join(os.getcwd(), "tecnoempleo_debug.html")
     with open(debug_path, "w", encoding="utf-8") as f:
         f.write(response.text)
 
+    # Analizar el HTML de la página
     soup = BeautifulSoup(response.text, 'html.parser')
     offers = []
     one_month_ago = datetime.now().date() - timedelta(days=30)
     date_list = []
 
+    # Iterar sobre cada oferta de trabajo en la página
     for offer in soup.select('.col-10.col-md-9.col-lg-7'):
+        # Extraer elementos de título, empresa y ubicación
         title_elem = offer.select_one('h3.fs-5.mb-2 a')
         company_elem = offer.select_one('a.text-primary.link-muted')
         location_elem = offer.select_one('span.d-block.d-lg-none.text-gray-800')
@@ -63,7 +65,7 @@ def scrape_tecnoempleo(request):
             location_text = location_elem.text.strip()
             date_text = None
 
-            # Extraer fecha
+            # Extraer y limpiar la fecha de publicación
             if ' - ' in location_text:
                 location, date_candidate = location_text.split(' - ', 1)
                 location = BeautifulSoup(location, 'html.parser').text.strip()
@@ -90,6 +92,7 @@ def scrape_tecnoempleo(request):
             if pub_date < one_month_ago:
                 continue
 
+            # Crear o actualizar la oferta de trabajo en la base de datos
             job, created = JobOffer.objects.get_or_create(
                 title=title,
                 company=company,
@@ -101,13 +104,14 @@ def scrape_tecnoempleo(request):
                 }
             )
             if created:
+                # Agregar habilidades a la oferta de trabajo
                 for skill_elem in skills_elems:
                     skill_name = skill_elem.text.strip()
                     skill, _ = Skill.objects.get_or_create(name=skill_name)
                     job.skills.add(skill)
             offers.append(job)
 
-    # Calcular rango de fechas y mensaje
+    # Calcular el rango de fechas de las ofertas extraídas
     if date_list:
         min_date = min(date_list).strftime('%d/%m/%Y')
         max_date = max(date_list).strftime('%d/%m/%Y')
@@ -115,7 +119,7 @@ def scrape_tecnoempleo(request):
     else:
         messages.success(request, "No se encontraron fechas válidas en las ofertas.")
     
-    # Pasar número de ofertas al contexto
+    # Pasar el número de ofertas al contexto
     context = {
         'offers': offers,
         'num_offers': len(offers)

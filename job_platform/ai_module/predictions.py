@@ -2,6 +2,15 @@
 from market_analysis.models import JobOffer, Skill
 from datetime import datetime, timedelta
 
+# Este módulo contiene funciones para calcular tendencias de habilidades en ofertas de trabajo.
+# Utiliza datos de ofertas de trabajo de los últimos 90 días para predecir la demanda futura.
+
+# Calcula la tendencia de una habilidad específica en un origen de datos dado.
+# Retorna la demanda futura de la habilidad en base a las ofertas de los últimos 90 días.
+# Parámetros:
+# - skill: la habilidad a analizar.
+# - source: el origen de los datos (por ejemplo, LinkedIn).
+# - days_ahead: número de días a predecir en el futuro.
 def calculate_skill_trend(skill, source, days_ahead=30):
     today = datetime.now().date()
     period_30_days_ago = today - timedelta(days=30)
@@ -49,6 +58,10 @@ def calculate_skill_trend(skill, source, days_ahead=30):
 
     return max(0, int(predicted_demand))
 
+# Obtiene las tendencias futuras de todas las habilidades disponibles.
+# Retorna una lista de habilidades con su demanda futura predicha.
+# Parámetros:
+# - days_ahead: número de días a predecir en el futuro.
 def get_future_skill_trends(days_ahead=30):
     skills = Skill.objects.all()
     sources = ['LinkedIn', 'Tecnoempleo']
