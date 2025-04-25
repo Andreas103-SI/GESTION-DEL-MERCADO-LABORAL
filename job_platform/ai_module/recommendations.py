@@ -5,6 +5,7 @@ from projects.models import Task, Project
 from market_analysis.models import Skill
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+import os
 
 User = get_user_model()
 
@@ -19,8 +20,8 @@ def recommend_tasks(user, max_recommendations=5):
             # Crear usuario predeterminado
             default_user = User.objects.create_user(
                 username='default_manager',
-                password='default123',
-                email='default@jobplatform.com',
+                password=os.getenv('AI_MODULE_PASSWORD'),
+                email=os.getenv('AI_MODULE_EMAIL'),
                 is_active=True
             )
             print("Creado usuario predeterminado: default_manager")

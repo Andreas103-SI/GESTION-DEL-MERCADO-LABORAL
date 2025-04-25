@@ -345,8 +345,8 @@ class LinkedInScraper(BaseScraper):
     def run(self, query="software developer", location="Spain", max_offers=10):
         logger.info(f"Iniciando scraping de LinkedIn: query='{query}', location='{location}', max_offers={max_offers}")
         try:
-            username = os.getenv("LINKEDIN_EMAIL", "andreasierra1223@gmail.com")
-            password = os.getenv("LINKEDIN_PASSWORD", "Dicampus@2020")
+            username = os.getenv("LINKEDIN_EMAIL")
+            password = os.getenv("LINKEDIN_PASSWORD")
 
             if not username or not password:
                 logger.error("Las credenciales de LinkedIn (LINKEDIN_EMAIL y LINKEDIN_PASSWORD) no están configuradas en .env")
