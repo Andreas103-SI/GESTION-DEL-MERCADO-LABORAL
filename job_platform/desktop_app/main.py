@@ -1,97 +1,62 @@
-"""
-Archivo principal de la aplicación de escritorio.
-"""
+# desktop_app/main.py
+import os
+import sys
+import django
+from django.conf import settings
+
+# Configurar el entorno de Django
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'job_platform.settings')  # Ajusta 'job_platform' al nombre de tu proyecto
+django.setup()
+
 import tkinter as tk
 from tkinter import ttk
-from .views.login import LoginView
-from .views.job_offer import JobOfferView
-from .views.task import TaskView
-from .views.user import UserView
-from .styles import configure_styles
-from .utils import center_window
+from desktop_app.views.job_offer_view import JobOfferView
+from desktop_app.views.task_view import TaskView
+from desktop_app.views.user_view import UserView
+from desktop_app.controllers.job_offer_controller import JobOfferController
+from desktop_app.controllers.task_controller import TaskController
+from desktop_app.controllers.user_controller import UserController  # Corregido: importamos UserController
+from desktop_app.styles import configure_styles  # Importamos la función para aplicar estilos
 
-class MainApplication(tk.Tk):
-    """Ventana principal de la aplicación."""
-    
-    def __init__(self):
-        """Inicializa la aplicación principal."""
-        super().__init__()
-        
-        self.title("Plataforma de Empleo")
-        self.geometry("800x600")
-        
-        # Configurar estilos
+class DesktopApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión de Ofertas, Tareas y Usuarios")
+        self.root.geometry("800x600")
+
+        # Aplicar estilos globales
         configure_styles()
-        
-        # Crear vista de inicio de sesión
-        self.login_view = LoginView()
-        self.login_view.mainloop()
-        
-        # Crear ventana principal
-        self._create_widgets()
-        
-        # Centrar ventana
-        center_window(self)
-    
-    def _create_widgets(self):
-        """Crea y configura los widgets."""
-        # Marco principal
-        main_frame = ttk.Frame(self)
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Marco de navegación
-        nav_frame = ttk.Frame(main_frame)
-        nav_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-        
-        # Botones de navegación
-        job_offers_button = ttk.Button(
-            nav_frame,
-            text="Ofertas de Trabajo",
-            command=lambda: self._show_view("job_offers")
-        )
-        job_offers_button.pack(fill=tk.X, pady=5)
-        
-        tasks_button = ttk.Button(
-            nav_frame,
-            text="Tareas",
-            command=lambda: self._show_view("tasks")
-        )
-        tasks_button.pack(fill=tk.X, pady=5)
-        
-        users_button = ttk.Button(
-            nav_frame,
-            text="Usuarios",
-            command=lambda: self._show_view("users")
-        )
-        users_button.pack(fill=tk.X, pady=5)
-        
-        # Marco de contenido
-        self.content_frame = ttk.Frame(main_frame)
-        self.content_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Inicializar vistas
-        self.views = {
-            "job_offers": JobOfferView(self.content_frame),
-            "tasks": TaskView(self.content_frame),
-            "users": UserView(self.content_frame)
-        }
-        
-        # Mostrar vista por defecto
-        self._show_view("job_offers")
-    
-    def _show_view(self, view_name):
-        """Muestra la vista especificada."""
-        # Ocultar todas las vistas
-        for view in self.views.values():
-            view.pack_forget()
-        
-        # Mostrar vista seleccionada
-        self.views[view_name].pack(fill=tk.BOTH, expand=True)
 
-def main():
-    """Punto de entrada principal de la aplicación."""
-    app = MainApplication()
-    app.mainloop()
+        # Configurar el fondo de la ventana principal
+        self.root.configure(bg="#f5f5f5")  # Usamos BACKGROUND_COLOR definido en styles.py
+
+        # Pestañas (Tabs) para gestionar diferentes modelos
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(pady=10, expand=True)
+
+        # Pestaña para JobOffer
+        self.job_offer_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.job_offer_frame, text="Ofertas de Empleo")
+        self.job_offer_controller = JobOfferController(self.job_offer_frame)
+        self.job_offer_view = JobOfferView(self.job_offer_frame, self.job_offer_controller)
+        self.job_offer_controller.set_view(self.job_offer_view)  # Conectamos la vista con el controlador
+
+        # Pestaña para Task
+        self.task_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.task_frame, text="Tareas")
+        self.task_controller = TaskController(self.task_frame)
+        self.task_view = TaskView(self.task_frame, self.task_controller)
+        self.task_controller.set_view(self.task_view)  # Conectamos la vista con el controlador
+
+        # Pestaña para CustomUser
+        self.user_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.user_frame, text="Usuarios")
+        self.user_controller = UserController(self.user_frame)
+        self.user_view = UserView(self.user_frame, self.user_controller)
+        self.user_controller.set_view(self.user_view)  # Conectamos la vista con el controlador
 
 if __name__ == "__main__":
-    main() 
+    root = tk.Tk()
+    app = DesktopApp(root)
+    root.mainloop()

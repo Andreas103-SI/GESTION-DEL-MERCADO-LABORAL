@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 # Importaciones necesarias para la configuración
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
 
 # Construye rutas dentro del proyecto como BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # ADVERTENCIA DE SEGURIDAD: no ejecutes con debug activado en producción!
 DEBUG = True
 
-ALLOWED_HOSTS = []  # Lista de hosts permitidos
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Lista de hosts permitidos
 
 # Definición de aplicaciones
 INSTALLED_APPS = [
@@ -81,11 +85,11 @@ WSGI_APPLICATION = 'job_platform.wsgi.application'  # Configuración de WSGI
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'job_platform_db',  
-        'USER': 'postgres',  
-        'PASSWORD': os.getenv('DB_PASSWORD'),  
-        'HOST': 'localhost', 
-        'PORT': '5432', 
+        'NAME': 'job_platform_db',
+        'USER': 'postgres',
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

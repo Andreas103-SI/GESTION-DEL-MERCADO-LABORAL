@@ -1,55 +1,26 @@
 """
 Funciones de utilidad para la aplicación de escritorio.
 """
+# desktop_app/utils.py
 import tkinter as tk
-from datetime import datetime
-import re
 
-def center_window(window):
-    """Centra una ventana en la pantalla."""
-    window.update_idletasks()
-    width = window.winfo_width()
-    height = window.winfo_height()
-    x = (window.winfo_screenwidth() // 2) - (width // 2)
-    y = (window.winfo_screenheight() // 2) - (height // 2)
-    window.geometry(f'{width}x{height}+{x}+{y}')
+def clear_job_entries(view):
+    view.job_title_entry.delete(0, tk.END)
+    view.job_company_entry.delete(0, tk.END)
+    view.job_location_entry.delete(0, tk.END)
+    view.job_source_entry.delete(0, tk.END)
+    view.job_url_entry.delete(0, tk.END)
 
-def validate_date(date_str):
-    """Valida el formato de fecha (YYYY-MM-DD)."""
-    try:
-        datetime.strptime(date_str, '%Y-%m-%d')
-        return True
-    except ValueError:
-        return False
+def clear_task_entries(view):
+    view.task_title_entry.delete(0, tk.END)
+    view.task_description_entry.delete(0, tk.END)
+    view.task_state_combo.set("pending")
+    view.task_priority_combo.set("medium")
+    view.task_deadline_entry.delete(0, tk.END)
+    view.task_project_entry.delete(0, tk.END)
 
-def validate_email(email):
-    """Valida el formato de correo electrónico."""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return bool(re.match(pattern, email))
-
-def validate_required_fields(fields):
-    """Valida que todos los campos requeridos estén llenos."""
-    return all(field.get().strip() for field in fields)
-
-def show_error_message(parent, message):
-    """Muestra un mensaje de error en una ventana emergente."""
-    tk.messagebox.showerror("Error", message, parent=parent)
-
-def show_success_message(parent, message):
-    """Muestra un mensaje de éxito en una ventana emergente."""
-    tk.messagebox.showinfo("Éxito", message, parent=parent)
-
-def confirm_action(parent, message):
-    """Muestra un diálogo de confirmación."""
-    return tk.messagebox.askyesno("Confirmar", message, parent=parent)
-
-def format_date(date):
-    """Formatea un objeto de fecha a cadena YYYY-MM-DD."""
-    return date.strftime('%Y-%m-%d') if date else ''
-
-def parse_date(date_str):
-    """Convierte una cadena YYYY-MM-DD a un objeto de fecha."""
-    try:
-        return datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return None 
+def clear_user_entries(view):
+    view.user_username_entry.delete(0, tk.END)
+    view.user_email_entry.delete(0, tk.END)
+    view.user_password_entry.delete(0, tk.END)
+    view.user_role_combo.set("collaborator")

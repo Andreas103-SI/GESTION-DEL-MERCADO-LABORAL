@@ -3,7 +3,7 @@ Vista de inicio de sesión para autenticación de usuarios.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
-from ..controllers.user import UserController
+from ..controllers.user_controller import UserController
 from ..utils import center_window, show_error_message, show_success_message
 from ..styles import configure_styles
 

@@ -3,7 +3,10 @@
 
 # Modelo que representa una habilidad específica.
 # Almacena el nombre de la habilidad de manera única y sensible a mayúsculas/minúsculas.
-from job_platform.ai_module import models
+from django.db import models
+
+
+
 
 
 class Skill(models.Model):
