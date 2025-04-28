@@ -82,6 +82,7 @@ WSGI_APPLICATION = 'job_platform.wsgi.application'  # Configuración de WSGI
 
 # Configuración de la base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# job_platform/settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -92,6 +93,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
 
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
