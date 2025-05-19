@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block extra_head %}
     <style>
         .section {
@@ -43,6 +45,24 @@
             margin: 20px auto;
         }
     </style>
+    <script>
+        // Pasar datos a JavaScript de forma segura
+        const chartData = {
+            skills: {
+                labels: JSON.parse('{{ skills_labels|safe }}'),
+                data: JSON.parse('{{ skills_data|safe }}')
+            },
+            sources: {
+                labels: JSON.parse('{{ sources_labels|safe }}'),
+                data: JSON.parse('{{ sources_data|safe }}')
+            },
+            futureSkills: {
+                labels: JSON.parse('[{% for skill in future_skills %}"{{ skill.name }}"{% if not forloop.last %},{% endif %}{% endfor %}]'),
+                data: JSON.parse('[{% for skill in future_skills %}{{ skill.count }}{% if not forloop.last %},{% endif %}{% endfor %}]')
+            }
+        };
+    </script>
+    <script src="{% static 'js/charts.js' %}"></script>
 {% endblock %}
 {% block content %}
 <div class="container mt-4">
@@ -76,32 +96,6 @@
         <h2>Habilidades más demandadas (último mes)</h2>
         {% if skills_demand %}
             <canvas id="skillsChart"></canvas>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    try {
-                        const ctx = document.getElementById('skillsChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: {{ skills_labels|safe }},
-                                datasets: [{
-                                    label: 'Habilidades más demandadas',
-                                    data: {{ skills_data|safe }},
-                                    backgroundColor: '#007bff',
-                                    borderColor: '#0056b3',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                scales: { y: { beginAtZero: true } },
-                                plugins: { legend: { display: true } }
-                            }
-                        });
-                    } catch (e) {
-                        console.error('Error rendering skills chart:', e);
-                    }
-                });
-            </script>
         {% else %}
             <p>No hay datos suficientes para mostrar el gráfico.</p>
         {% endif %}
@@ -119,31 +113,6 @@
         <h2>Ofertas por fuente</h2>
         {% if sources_count %}
             <canvas id="sourcesChart"></canvas>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    try {
-                        const ctx = document.getElementById('sourcesChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: {{ sources_labels|safe }},
-                                datasets: [{
-                                    label: 'Ofertas por fuente',
-                                    data: {{ sources_data|safe }},
-                                    backgroundColor: ['#007bff', '#0056b3'],
-                                    borderColor: '#ffffff',
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                plugins: { legend: { display: true } }
-                            }
-                        });
-                    } catch (e) {
-                        console.error('Error rendering sources chart:', e);
-                    }
-                });
-            </script>
         {% else %}
             <p>No hay datos suficientes para mostrar el gráfico.</p>
         {% endif %}
@@ -186,15 +155,32 @@
     <!-- Habilidades futuras -->
     <div class="section">
         <h2>Habilidades con mayor demanda prevista (próximos 30 días)</h2>
-        <ul>
-            {% for skill in future_skills %}
-            <li>{{ skill.name }}: {{ skill.count }} ofertas previstas</li>
-            {% empty %}
-            <li>No hay predicciones disponibles.</li>
-            {% endfor %}
-        </ul>
-    </div>
+        {% if future_skills %}
+            <!-- Tabla -->
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Habilidad</th>
+                        <th>Demanda Promedio (últ. 30 días)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for skill in future_skills %}
+                        <tr>
+                            <td>{{ skill.name }}</td>
+                            <td>{{ skill.count|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
+            <!-- Gráfico -->
+            <canvas id="futureSkillsChart"></canvas>
+        {% else %}
+            <p>No hay predicciones disponibles.</p>
+        {% endif %}
+    </div>
+    
     <!-- Tareas recomendadas -->
     <div class="section">
         <h2>Tareas recomendadas para ti</h2>

@@ -4,17 +4,18 @@ from django.db.models import Count, Q
 from django.contrib import messages
 from market_analysis.models import JobOffer, Skill, MarketData
 from ai_module.recommendations import recommend_tasks
-from ai_module.predictions import get_future_skill_trends
 from datetime import datetime, timedelta
 import json
 from data_integration.scrapers.linkedin import scrape_linkedin
 from data_integration.scrapers.tecnoempleo import scrape_tecnoempleo
 from django.core.paginator import Paginator
+from django.utils import timezone
+from collections import defaultdict
 
 def dashboard(request):
     one_month_ago = datetime.now().date() - timedelta(days=30)
     
-    # Habilidades más demandadas
+    # Habilidades más demandadas (último mes)
     skills_demand = JobOffer.objects.filter(
         publication_date__gte=one_month_ago,
         skills__isnull=False,
@@ -64,13 +65,27 @@ def dashboard(request):
         ).values('skills__name').annotate(count=Count('id')).order_by('-count')[:5]
         platform_comparison[source] = [{'name': s['skills__name'], 'count': s['count']} for s in skills]
     
-    # Predicciones de habilidades futuras
+    # Predicciones de habilidades futuras usando MarketData
+    skill_trends = []
     try:
-        future_skills = get_future_skill_trends()
+        # Filtrar datos de MarketData de los últimos 30 días
+        market_data = MarketData.objects.filter(date__gte=one_month_ago)
+        
+        # Agrupar por habilidad y calcular el promedio de demand_count
+        skill_demand = defaultdict(list)
+        for entry in market_data:
+            skill_demand[entry.skill].append(entry.demand_count)
+        
+        # Calcular promedio y ordenar por demanda descendente (top 5)
+        skill_trends = [
+            {'name': skill, 'count': sum(demands) / len(demands)} 
+            for skill, demands in skill_demand.items() if len(demands) > 0
+        ]
+        skill_trends = sorted(skill_trends, key=lambda x: x['count'], reverse=True)[:5]
     except Exception as e:
-        print("Error en predicciones:", e)
-        future_skills = []
-    
+        print("Error al calcular tendencias de habilidades:", e)
+        skill_trends = []
+
     # Recomendaciones de tareas
     try:
         recommended_tasks = recommend_tasks(request.user)
@@ -108,7 +123,7 @@ def dashboard(request):
         'total_offers': total_offers,
         'companies_count': companies_count,
         'platform_comparison': platform_comparison,
-        'future_skills': future_skills,
+        'future_skills': skill_trends,
         'recommended_tasks': recommended_tasks,
         'recent_offers': recent_offers,
         'search_query': search_query,

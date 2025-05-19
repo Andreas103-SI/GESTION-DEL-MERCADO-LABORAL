@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.db.backends.postgresql.creation import DatabaseCreation
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -83,6 +84,15 @@ WSGI_APPLICATION = 'job_platform.wsgi.application'  # Configuración de WSGI
 # Configuración de la base de datos
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # job_platform/settings.py
+class CustomDatabaseCreation(DatabaseCreation):
+    def _create_test_db(self, verbosity, autoclobber, keepdb=False):
+        # Llamar al método original de la clase base
+        test_db_name = super()._create_test_db(verbosity, autoclobber, keepdb)
+        # Habilitar la extensión citext en la base de datos de prueba
+        with self.connection.cursor() as cursor:
+            cursor.execute("CREATE EXTENSION IF NOT EXISTS citext;")
+        return test_db_name
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -91,9 +101,14 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': 'localhost',
         'PORT': '5432',
+        'TEST': {
+            'NAME': 'test_job_platform_db',
+        },
     }
 }
 
+from django.db import connections
+connections.databases['default']['TEST']['CREATION_CLASS'] = CustomDatabaseCreation
 
 # Validación de contraseñas
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

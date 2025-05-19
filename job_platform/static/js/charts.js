@@ -1,41 +1,82 @@
 // static/js/charts.js
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Charts.js cargado");
-    console.log("skillsLabels desde JS:", window.skillsLabels);
-    console.log("skillsData desde JS:", window.skillsData);
-    console.log("sourcesLabels desde JS:", window.sourcesLabels);
-    console.log("sourcesData desde JS:", window.sourcesData);
+    console.log("Datos de gráficos:", chartData);
 
-    const skillsCtx = document.getElementById('skillsChart').getContext('2d');
-    const skillsChart = new Chart(skillsCtx, {
-        type: 'bar',
-        data: {
-            labels: window.skillsLabels,
-            datasets: [{
-                label: 'Número de Ofertas',
-                data: window.skillsData,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
+    // Gráfico de Habilidades más demandadas
+    if (document.getElementById('skillsChart')) {
+        try {
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.skills.labels,
+                    datasets: [{
+                        label: 'Habilidades más demandadas',
+                        data: chartData.skills.data,
+                        backgroundColor: '#007bff',
+                        borderColor: '#0056b3',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: true } }
+                }
+            });
+        } catch (e) {
+            console.error('Error rendering skills chart:', e);
         }
-    });
+    }
 
-    const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
-    const sourcesChart = new Chart(sourcesCtx, {
-        type: 'pie',
-        data: {
-            labels: window.sourcesLabels,
-            datasets: [{
-                label: 'Ofertas por Fuente',
-                data: window.sourcesData,
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-            }]
+    // Gráfico de Ofertas por fuente
+    if (document.getElementById('sourcesChart')) {
+        try {
+            const ctx = document.getElementById('sourcesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: chartData.sources.labels,
+                    datasets: [{
+                        label: 'Ofertas por fuente',
+                        data: chartData.sources.data,
+                        backgroundColor: ['#007bff', '#0056b3'],
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: true } }
+                }
+            });
+        } catch (e) {
+            console.error('Error rendering sources chart:', e);
         }
-    });
+    }
+
+    // Gráfico de Habilidades futuras
+    if (document.getElementById('futureSkillsChart')) {
+        try {
+            const ctx = document.getElementById('futureSkillsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.futureSkills.labels,
+                    datasets: [{
+                        label: 'Demanda Promedio (próximos 30 días)',
+                        data: chartData.futureSkills.data,
+                        backgroundColor: '#007bff',
+                        borderColor: '#0056b3',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: true } }
+                }
+            });
+        } catch (e) {
+            console.error('Error rendering future skills chart:', e);
+        }
+    }
 });
