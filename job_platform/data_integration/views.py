@@ -1,5 +1,5 @@
 # data_integration/views.py
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from .scrapers.linkedin import scrape_linkedin
@@ -23,11 +23,11 @@ def scrape_linkedin_view(request):
             # Llama a la función de scraping de LinkedIn y muestra un mensaje de éxito.
             scrape_linkedin(request)
             messages.success(request, 'Datos de LinkedIn actualizados correctamente.')
-            return HttpResponseRedirect('/data/scrape-results/')
+            return redirect('data_integration:scrape_results')
         except Exception as e:
             # Muestra un mensaje de error si ocurre una excepción durante el scraping.
             messages.error(request, f'Error al actualizar LinkedIn: {e}')
-            return HttpResponseRedirect('/data/')
+            return redirect('data_integration:scrape_index')
     # Renderiza la plantilla de la página de inicio del scraping si no es una solicitud POST.
     return render(request, 'data_integration/scrape_index.html', {})
 
@@ -39,11 +39,11 @@ def scrape_tecnoempleo_view(request):
             # Llama a la función de scraping de Tecnoempleo y muestra un mensaje de éxito.
             scrape_tecnoempleo(request)
             messages.success(request, 'Datos de Tecnoempleo actualizados correctamente.')
-            return HttpResponseRedirect('/data/scrape-results/')
+            return redirect('data_integration:scrape_results')
         except Exception as e:
             # Muestra un mensaje de error si ocurre una excepción durante el scraping.
             messages.error(request, f'Error al actualizar Tecnoempleo: {e}')
-            return HttpResponseRedirect('/data/')
+            return redirect('data_integration:scrape_index')
     # Renderiza la plantilla de la página de inicio del scraping si no es una solicitud POST.
     return render(request, 'data_integration/scrape_index.html', {})
 

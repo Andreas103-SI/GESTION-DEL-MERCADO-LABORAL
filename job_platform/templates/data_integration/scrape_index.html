@@ -16,7 +16,7 @@
                 <div class="card-body bg-light">
                     <h5 class="card-title text-primary">LinkedIn</h5>
                     <p class="card-text">Extrae ofertas de empleo de LinkedIn en España.</p>
-                    <form method="post" action="{% url 'scrape_linkedin' %}">
+                    <form method="post" action="{% url 'data_integration:scrape_linkedin' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary">Ejecutar Scraper de LinkedIn</button>
                     </form>
@@ -28,7 +28,7 @@
                 <div class="card-body bg-light">
                     <h5 class="card-title text-primary">Tecnoempleo</h5>
                     <p class="card-text">Extrae ofertas de empleo de Tecnoempleo en España.</p>
-                    <form method="post" action="{% url 'scrape_tecnoempleo' %}">
+                    <form method="post" action="{% url 'data_integration:scrape_tecnoempleo' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary">Ejecutar Scraper de Tecnoempleo</button>
                     </form>
@@ -37,8 +37,8 @@
         </div>
     </div>
     <div class="mt-4">
-        <a href="{% url 'dashboard' %}" class="btn btn-primary">Ver Dashboard</a>
-        <a href="{% url 'scrape_results' %}" class="btn btn-outline-primary">Ver Resultados</a>
+        <a href="{% url 'data_integration:data_dashboard' %}" class="btn btn-primary">Ver Dashboard</a>
+        <a href="{% url 'data_integration:scrape_results' %}" class="btn btn-outline-primary">Ver Resultados</a>
         <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-primary">Análisis de Mercado</a>
     </div>
 </div>

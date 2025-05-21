@@ -1,3 +1,4 @@
+<!-- market_analysis/templates/market_analysis/dashboard.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -45,8 +46,8 @@
             margin: 20px auto;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Pasar datos a JavaScript de forma segura
         const chartData = {
             skills: {
                 labels: JSON.parse('{{ skills_labels|safe }}'),
@@ -57,13 +58,14 @@
                 data: JSON.parse('{{ sources_data|safe }}')
             },
             futureSkills: {
-                labels: JSON.parse('[{% for skill in future_skills %}"{{ skill.name }}"{% if not forloop.last %},{% endif %}{% endfor %}]'),
-                data: JSON.parse('[{% for skill in future_skills %}{{ skill.count }}{% if not forloop.last %},{% endif %}{% endfor %}]')
+                labels: JSON.parse('{{ future_skills_labels|safe }}'),
+                data: JSON.parse('{{ future_skills_data|safe }}')
             }
         };
     </script>
     <script src="{% static 'js/charts.js' %}"></script>
 {% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h1>Dashboard de Análisis de Mercado</h1>
@@ -180,11 +182,11 @@
             <p>No hay predicciones disponibles.</p>
         {% endif %}
     </div>
-    
+
     <!-- Tareas recomendadas -->
     <div class="section">
         <h2>Tareas recomendadas para ti</h2>
-        <form method="get">
+        <form method="get" action="{% url 'market_analysis:dashboard' %}">
             <label for="priority_filter">Filtrar por prioridad:</label>
             <select name="priority" id="priority_filter" class="form-select mb-2">
                 <option value="">Todas</option>
@@ -196,7 +198,7 @@
         </form>
         <ul>
             {% for task in recommended_tasks %}
-            <li>{{ task.title }} (Prioridad: {{ task.priority }})</li>
+            <li>{{ task.title }} (Prioridad: {{ task.get_priority_display }})</li>
             {% empty %}
             <li>No hay tareas recomendadas.</li>
             {% endfor %}
@@ -206,7 +208,7 @@
     <!-- Ofertas recientes -->
     <div class="section">
         <h2>Ofertas recientes</h2>
-        <form method="get">
+        <form method="get" action="{% url 'market_analysis:dashboard' %}">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Buscar ofertas..." class="form-control mb-2">
             <button type="submit" class="btn btn-primary">Buscar</button>
         </form>

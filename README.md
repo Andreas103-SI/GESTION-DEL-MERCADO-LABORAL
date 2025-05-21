@@ -49,11 +49,32 @@ Este proyecto es una plataforma de gestión de tareas y análisis del mercado la
    python manage.py runserver
    ```
 
+## Endpoints Disponibles
+
+### Páginas Principales
+- Página de inicio: `http://127.0.0.1:8000/`
+- Panel de administración: `http://127.0.0.1:8000/admin/`
+
+### Análisis de Mercado
+- Dashboard principal: `http://127.0.0.1:8000/market-analysis/dashboard/`
+- Actualización de datos: `http://127.0.0.1:8000/market-analysis/update-scraper/`
+
+### Integración de Datos
+- Panel de scrapers: `http://127.0.0.1:8000/data-integration/`
+- Dashboard de datos: `http://127.0.0.1:8000/data-integration/data-dashboard/`
+- Resultados de scraping: `http://127.0.0.1:8000/data-integration/scrape-results/`
+
+### Gestión de Usuarios
+- Login: `http://127.0.0.1:8000/accounts/login/`
+- Registro: `http://127.0.0.1:8000/accounts/register/`
+- Perfil: `http://127.0.0.1:8000/users/profile/`
+
 ## Uso
 - Accede a la aplicación en `http://127.0.0.1:8000/`.
 - Registra usuarios y asigna roles.
 - Crea y gestiona proyectos y tareas.
 - Visualiza análisis del mercado laboral en el dashboard.
+- Utiliza los scrapers para obtener datos actualizados del mercado laboral.
 
 ## Contribuciones
 Las contribuciones son bienvenidas. Por favor, abre un issue o envía un pull request para discutir cambios importantes.

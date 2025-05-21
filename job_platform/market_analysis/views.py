@@ -24,7 +24,6 @@ def dashboard(request):
     ).values('skills__name').annotate(count=Count('id')).order_by('-count')[:10]
     skills_labels = json.dumps([skill['skills__name'].capitalize() for skill in skills_demand])
     skills_data = json.dumps([skill['count'] for skill in skills_demand])
-    
     print("Skills Labels:", skills_labels)
     print("Skills Data:", skills_data)
     
@@ -67,6 +66,8 @@ def dashboard(request):
     
     # Predicciones de habilidades futuras usando MarketData
     skill_trends = []
+    future_skills_labels = json.dumps([])
+    future_skills_data = json.dumps([])
     try:
         # Filtrar datos de MarketData de los últimos 30 días
         market_data = MarketData.objects.filter(date__gte=one_month_ago)
@@ -74,7 +75,9 @@ def dashboard(request):
         # Agrupar por habilidad y calcular el promedio de demand_count
         skill_demand = defaultdict(list)
         for entry in market_data:
-            skill_demand[entry.skill].append(entry.demand_count)
+            # Convertir el objeto Skill a su nombre (str)
+            skill_name = entry.skill.name if entry.skill else "Desconocido"
+            skill_demand[skill_name].append(entry.demand_count)
         
         # Calcular promedio y ordenar por demanda descendente (top 5)
         skill_trends = [
@@ -82,9 +85,12 @@ def dashboard(request):
             for skill, demands in skill_demand.items() if len(demands) > 0
         ]
         skill_trends = sorted(skill_trends, key=lambda x: x['count'], reverse=True)[:5]
+        
+        # Generar datos para el gráfico
+        future_skills_labels = json.dumps([trend['name'] for trend in skill_trends])
+        future_skills_data = json.dumps([trend['count'] for trend in skill_trends])
     except Exception as e:
         print("Error al calcular tendencias de habilidades:", e)
-        skill_trends = []
 
     # Recomendaciones de tareas
     try:
@@ -112,6 +118,7 @@ def dashboard(request):
     page_number = request.GET.get('page')
     recent_offers = paginator.get_page(page_number)
     
+    # Definir el contexto después de todas las variables
     context = {
         'skills_demand': skills_demand,
         'skills_labels': skills_labels,
@@ -124,6 +131,8 @@ def dashboard(request):
         'companies_count': companies_count,
         'platform_comparison': platform_comparison,
         'future_skills': skill_trends,
+        'future_skills_labels': future_skills_labels,
+        'future_skills_data': future_skills_data,
         'recommended_tasks': recommended_tasks,
         'recent_offers': recent_offers,
         'search_query': search_query,
@@ -144,4 +153,4 @@ def update_scraper(request):
                 messages.success(request, 'Datos de Tecnoempleo actualizados correctamente.')
         except Exception as e:
             messages.error(request, f'Error al actualizar {source}: {e}')
-    return redirect('dashboard')
+    return redirect('market_analysis:dashboard')

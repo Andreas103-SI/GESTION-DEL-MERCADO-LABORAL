@@ -1,3 +1,4 @@
+<!-- templates/base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html>
@@ -5,7 +6,7 @@
     <title>{% block title %}Gestión del Mercado Laboral{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-JZ7H0z7gZ5zD4gB3eE0c1Z6f3eE0c1Z6f3eE0c1Z6f3eE0c1Z6f3e" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha384-6x3O0X5pCfTqIA6K0q1a5CiZkRZw6S/63a7I1dt/RECpSmd52auD2xTvEI5rL8AR" crossorigin="anonymous"></script>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -24,9 +25,8 @@
                         <a class="nav-link" href="{% url 'market_analysis:dashboard' %}">Dashboard de Análisis</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'market_analysis:scrape_index' %}">Scrapers</a>
+                        <a class="nav-link" href="{% url 'data_integration:scrape_index' %}">Scrapers</a>
                     </li>
-                    <!-- Agrega más enlaces según necesites -->
                 </ul>
             </div>
         </div>
@@ -35,5 +35,6 @@
         {% block content %}
         {% endblock %}
     </div>
+    <script src="{% static 'js/charts.js' %}"></script>
 </body>
 </html>

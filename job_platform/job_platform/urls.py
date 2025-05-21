@@ -7,7 +7,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
-    path('data/', include('data_integration.urls')),
+    path('data-integration/', include('data_integration.urls', namespace='data_integration')),  # URL actualizada
     path('market-analysis/', include('market_analysis.urls', namespace='market_analysis')),
     path('projects/', include('projects.urls')),
     path('restricted/', restricted_view, name='restricted'),
