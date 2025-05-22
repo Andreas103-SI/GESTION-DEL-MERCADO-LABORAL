@@ -198,7 +198,9 @@
         </form>
         <ul>
             {% for task in recommended_tasks %}
-            <li>{{ task.title }} (Prioridad: {{ task.get_priority_display }})</li>
+            <li>
+                <a href="{% url 'task_detail' task.project.id task.id %}">{{ task.title }}</a> (Prioridad: {{ task.get_priority_display }})
+            </li>
             {% empty %}
             <li>No hay tareas recomendadas.</li>
             {% endfor %}

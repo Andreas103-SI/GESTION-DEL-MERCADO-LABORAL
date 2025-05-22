@@ -3,36 +3,133 @@
 
 {% block extra_head %}
     <style>
+        /* Variables de colores */
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --background-dark: #1a1a1a;
+            --background-darker: #333333;
+            --text-light: #cccccc;
+            --border-color: #333333;
+        }
+
+        /* Estilos generales */
+        body {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+        }
+
+        /* Secciones */
         .section {
             margin-bottom: 20px;
             padding: 20px;
-            border: 1px solid #007bff;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            background-color: #e6f0fa;
+            background-color: var(--background-dark);
         }
-        h1, h2 {
-            color: #0056b3;
+
+        /* Tipografía */
+        h1, h2, h3 {
+            color: var(--primary-color);
         }
+
+        /* Enlaces */
+        a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: var(--primary-color);
+        }
+
+        /* Botones */
         .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: #ffffff;
         }
         .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
         }
+
+        /* Paginación */
+        .pagination {
+            display: inline-flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .pagination a {
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            background-color: var(--background-darker);
+            color: var(--text-light);
+        }
+
+        /* Gráficos */
         canvas {
             max-width: 600px;
             margin: 20px auto;
+            background-color: var(--background-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        /* Listas y párrafos */
+        ul, p {
+            color: var(--text-light);
+        }
+
+        /* Tablas */
+        .table {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+        }
+        .table th, .table td {
+            border-color: var(--border-color);
+        }
+        .table thead th {
+            background-color: var(--background-darker);
+            color: var(--primary-color);
+        }
+
+        /* Formularios */
+        .form-control, .form-select {
+            background-color: var(--background-darker);
+            color: var(--text-light);
+            border-color: var(--border-color);
+        }
+
+        /* Alertas */
+        .alert {
+            background-color: var(--background-darker);
+            color: var(--text-light);
+            border-color: var(--primary-color);
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Debug para verificar los datos
+        const comparisonData = JSON.parse('{{ comparison_data|safe }}');
+        console.log('Comparison Data:', comparisonData);
+        
         const chartData = {
+            skills: {
+                labels: JSON.parse('{{ skills_labels|safe }}'),
+                data: JSON.parse('{{ skills_data|safe }}')
+            },
             sources: {
                 labels: JSON.parse('{{ sources_labels|safe }}'),
                 data: JSON.parse('{{ sources_data|safe }}')
-            }
+            },
+            futureSkills: {
+                labels: JSON.parse('{{ future_skills_labels|safe }}'),
+                data: JSON.parse('{{ future_skills_data|safe }}')
+            },
+            comparison: comparisonData
         };
     </script>
     <script src="{% static 'js/charts.js' %}"></script>
@@ -49,6 +146,16 @@
         {% endfor %}
     {% endif %}
 
+    <!-- Habilidades más demandadas -->
+    <div class="section">
+        <h2>Habilidades más demandadas</h2>
+        {% if skills_data %}
+            <canvas id="skillsChart"></canvas>
+        {% else %}
+            <p>No hay datos suficientes para mostrar el gráfico.</p>
+        {% endif %}
+    </div>
+
     <!-- Ofertas por fuente -->
     <div class="section">
         <h2>Ofertas por fuente</h2>
@@ -64,6 +171,55 @@
             <li>No hay datos disponibles.</li>
             {% endfor %}
         </ul>
+    </div>
+
+    <!-- Habilidades futuras -->
+    <div class="section">
+        <h2>Tendencias de habilidades futuras</h2>
+        {% if future_skills_data %}
+            <canvas id="futureSkillsChart"></canvas>
+        {% else %}
+            <p>No hay datos suficientes para mostrar el gráfico.</p>
+        {% endif %}
+    </div>
+
+    <!-- Comparación entre plataformas -->
+    <div class="section">
+        <h2>Comparación entre plataformas</h2>
+        {% if platform_comparison %}
+            <div style="height: 400px;">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Habilidad</th>
+                        {% for platform in platform_comparison.keys %}
+                            <th>{{ platform }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for skill in comparisonData.labels %}
+                        <tr>
+                            <td>{{ skill }}</td>
+                            {% for platform in platform_comparison.values %}
+                                {% for skill_data in platform %}
+                                    {% if skill_data.name == skill %}
+                                        <td>{{ skill_data.count }}</td>
+                                    {% else %}
+                                        <td>0</td>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay datos suficientes para la comparación.</p>
+        {% endif %}
     </div>
 
     <div class="mt-4">

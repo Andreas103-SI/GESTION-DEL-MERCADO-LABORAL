@@ -10,7 +10,20 @@
             </div>
         {% endfor %}
     {% endif %}
-    <p class="text-primary">Se han extraído {{ num_offers }} ofertas.</p>
+
+    <!-- Formulario de búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form method="get" action="{% url 'data_integration:scrape_results' %}" class="d-flex">
+                <input type="text" name="search" value="{{ search_query }}" 
+                       class="form-control me-2" 
+                       placeholder="Buscar por ciudad, tecnología, empresa...">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="text-primary">Se han encontrado {{ num_offers }} ofertas{% if search_query %} para "{{ search_query }}"{% endif %}.</p>
     {% if offers %}
         <div class="row">
             {% for offer in offers %}
@@ -35,7 +48,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="text-muted">No se encontraron ofertas.</p>
+        <p class="text-muted">No se encontraron ofertas{% if search_query %} para "{{ search_query }}"{% endif %}.</p>
     {% endif %}
     <div class="mt-3">
         <a href="{% url 'data_integration:scrape_index' %}" class="btn btn-primary">Volver a Scrapers</a>

@@ -12,4 +12,5 @@ urlpatterns = [
     path('projects/', include('projects.urls')),
     path('restricted/', restricted_view, name='restricted'),
     path('users/', include('users.urls')),
+    path('ai/', include('ai_module.urls', namespace='ai_module')),  # Nuevo módulo AI
 ]

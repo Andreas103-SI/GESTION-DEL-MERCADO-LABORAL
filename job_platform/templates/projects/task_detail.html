@@ -26,6 +26,12 @@
             <a href="{% url 'task_update' project.id task.id %}" class="button">Editar</a>
             <a href="{% url 'task_delete' project.id task.id %}" class="button">Eliminar</a>
         {% endif %}
+        {% if task.state != 'completed' %}
+            <form action="{% url 'ai_module:complete_task' task.id %}" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="button">Completar Tarea</button>
+            </form>
+        {% endif %}
         <a href="{% url 'task_list' project.id %}" class="button">Volver a la lista de tareas</a>
     </div>
 {% endblock %} 
