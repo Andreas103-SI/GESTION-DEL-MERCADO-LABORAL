@@ -1,13 +1,15 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inicio - Gestión del Mercado Laboral{% endblock %}
+
 {% block content %}
-    <h1>{{ message }}</h1>
-    {% if user.is_authenticated %}
-        <p>Bienvenido, {{ user.username }}</p>
-        <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit">Cerrar Sesión</button>
-        </form>
-    {% else %}
-        <a href="{% url 'login' %}">Iniciar Sesión</a>
-    {% endif %}
+    <div class="welcome-card">
+        <h1 class="display-4">¡Bienvenido, {{ user.username }}!</h1>
+        <p class="lead">Estás en el sistema de Gestión del Mercado Laboral. <br>Explora las herramientas y análisis disponibles para optimizar tu experiencia.</p>
+        <div class="mt-4">
+            <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-primary btn-lg">Ir al Dashboard</a>
+            <a href="{% url 'data_integration:scrape_index' %}" class="btn btn-secondary btn-lg">Administrar Scrapers</a>
+        </div>
+    </div>
 {% endblock %}

@@ -17,6 +17,7 @@ def role_required(*roles):
 
 # Vista para la página de inicio.
 # Muestra un mensaje de bienvenida en la página principal.
+@login_required
 def home(request):
     return render(request, 'home.html', {'message': '¡Hola, mundo!'})
 
