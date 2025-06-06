@@ -1,7 +1,141 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        .scraper-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .scraper-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .scraper-header h2 {
+            color: var(--secondary-color);
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .scraper-header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scraper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .scraper-card {
+            background: var(--background-darker);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            transition: transform var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+
+        .scraper-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .scraper-card h5 {
+            color: var(--secondary-color);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .scraper-card p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .scraper-card .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: all var(--transition-speed);
+        }
+
+        .scraper-card .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .action-buttons .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all var(--transition-speed);
+        }
+
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: var(--card-shadow);
+        }
+
+        .scraper-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            background-color: var(--border-color);
+        }
+
+        .scraper-status i {
+            font-size: 1.2rem;
+        }
+
+        .scraper-status.active {
+            color: #4CAF50;
+        }
+
+        .scraper-status.inactive {
+            color: #f44336;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Scrapers de Empleo</h2>
+<div class="scraper-container">
+    <div class="scraper-header">
+        <h2>Integración de Datos</h2>
+        <p>Extrae y actualiza información de ofertas de empleo de diferentes fuentes para mantener tu base de datos actualizada.</p>
+    </div>
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -10,36 +144,49 @@
             </div>
         {% endfor %}
     {% endif %}
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card border-primary">
-                <div class="card-body bg-light">
-                    <h5 class="card-title text-primary">LinkedIn</h5>
-                    <p class="card-text">Extrae ofertas de empleo de LinkedIn en España.</p>
-                    <form method="post" action="{% url 'data_integration:scrape_linkedin' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Ejecutar Scraper de LinkedIn</button>
-                    </form>
-                </div>
+
+    <div class="scraper-grid">
+        <div class="scraper-card">
+            <h5><i class="fab fa-linkedin"></i> LinkedIn</h5>
+            <p>Extrae ofertas de empleo de LinkedIn en España, incluyendo detalles como título, empresa, ubicación y habilidades requeridas.</p>
+            <form method="post" action="{% url 'data_integration:scrape_linkedin' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> Actualizar Datos de LinkedIn
+                </button>
+            </form>
+            <div class="scraper-status active">
+                <i class="fas fa-circle"></i>
+                <span>Última actualización: Hace 2 horas</span>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-primary">
-                <div class="card-body bg-light">
-                    <h5 class="card-title text-primary">Tecnoempleo</h5>
-                    <p class="card-text">Extrae ofertas de empleo de Tecnoempleo en España.</p>
-                    <form method="post" action="{% url 'data_integration:scrape_tecnoempleo' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Ejecutar Scraper de Tecnoempleo</button>
-                    </form>
-                </div>
+
+        <div class="scraper-card">
+            <h5><i class="fas fa-briefcase"></i> Tecnoempleo</h5>
+            <p>Extrae ofertas de empleo de Tecnoempleo en España, incluyendo información detallada sobre requisitos y beneficios.</p>
+            <form method="post" action="{% url 'data_integration:scrape_tecnoempleo' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> Actualizar Datos de Tecnoempleo
+                </button>
+            </form>
+            <div class="scraper-status active">
+                <i class="fas fa-circle"></i>
+                <span>Última actualización: Hace 1 hora</span>
             </div>
         </div>
     </div>
-    <div class="mt-4">
-        <a href="{% url 'data_integration:data_dashboard' %}" class="btn btn-primary">Ver Dashboard</a>
-        <a href="{% url 'data_integration:scrape_results' %}" class="btn btn-outline-primary">Ver Resultados</a>
-        <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-primary">Análisis de Mercado</a>
+
+    <div class="action-buttons">
+        <a href="{% url 'data_integration:data_dashboard' %}" class="btn btn-primary">
+            <i class="fas fa-chart-line"></i> Ver Dashboard
+        </a>
+        <a href="{% url 'data_integration:scrape_results' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> Ver Resultados
+        </a>
+        <a href="{% url 'market_analysis:dashboard' %}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-bar"></i> Análisis de Mercado
+        </a>
     </div>
 </div>
 {% endblock %}
