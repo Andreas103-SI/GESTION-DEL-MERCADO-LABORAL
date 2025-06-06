@@ -264,9 +264,15 @@
                         </div>
                     </div>
                     <div class="offer-actions">
-                        <a href="{{ offer.url }}" class="btn btn-primary" target="_blank">
-                            <i class="fas fa-external-link-alt"></i> Ver oferta
-                        </a>
+                        {% if offer.url %}
+                            <a href="{{ offer.url }}" class="btn btn-primary" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Ver oferta
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-exclamation-circle"></i> URL no disponible
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
