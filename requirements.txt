@@ -33,7 +33,7 @@ pillow-11.3.0
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pycparser==2.22
-pyOpenSSL==25.0.0
+pyOpenSSL==26.0.0
 pyparsing==3.2.3
 PySocks==1.7.1
 python-dateutil==2.9.0.post0
